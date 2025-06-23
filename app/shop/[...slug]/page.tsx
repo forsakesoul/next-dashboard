@@ -9,7 +9,7 @@ export default async function Page({
   return (
     <>
       <h1>Shop</h1>
-      <p>Slug: {slug}</p>
+      <p>Slug: {JSON.stringify(slug)}</p>
     </>
   )
 }
