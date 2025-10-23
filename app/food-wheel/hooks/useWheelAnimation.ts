@@ -94,11 +94,11 @@ export function useWheelAnimation({
       // 计算目标角度
       const targetAngle = targetIndex * SEGMENT_ANGLE
 
-      // 额外旋转圈数：增加到 15-20 圈（随机）- 让转盘转得更久
-      const extraSpins = (Math.floor(Math.random() * 6) + 15) * Math.PI * 2
+      // 额外旋转圈数：8-12 圈（随机）- 有足够的仪式感
+      const extraSpins = (Math.floor(Math.random() * 5) + 8) * Math.PI * 2
 
-      // 动画持续时间：增加到 10-14 秒（随机）- 更长的等待时间
-      const duration = 10000 + Math.floor(Math.random() * 4000)
+      // 动画持续时间：5-8 秒（随机）- 足够长但不会太久
+      const duration = 5000 + Math.floor(Math.random() * 3000)
 
       // 设置目标旋转角度（累加，不是重置）
       const newTargetRotation = currentRotation + extraSpins + targetAngle
@@ -161,33 +161,33 @@ export function useWheelAnimation({
       // 更新当前角度（这会触发重新渲染，Canvas组件会读取这个值）
       setCurrentRotation(currentAngle)
 
-      // 在90%时触发结果显示，给用户更多时间看到转盘减速
-      if (progress >= 0.90 && !hasTriggeredComplete.current) {
-        const finalIndex = targetIndexRef.current
-        console.log('⚡ Animation 90% - result ready, final index:', finalIndex)
-
-        hasTriggeredComplete.current = true
-        setWinningIndex(finalIndex)
-
-        // 通知结果已准备好
-        if (onResultReady) {
-          onResultReady(finalIndex)
-        }
-      }
-
       if (progress < 1) {
         // 继续动画直到100%
         animationFrameRef.current = requestAnimationFrame(animate)
       } else {
-        // 动画100%完成 - 立即停止转盘
-        console.log('✅ Animation 100% complete - stopping wheel immediately')
+        // 动画100%完成 - 立即停止转盘并显示结果
+        if (!hasTriggeredComplete.current) {
+          hasTriggeredComplete.current = true
+          const finalIndex = targetIndexRef.current
 
-        setIsSpinning(false)
-        setCurrentRotation(endRotation)
+          console.log('✅ Animation 100% complete - stopping wheel and showing result immediately')
 
-        // 动画完全结束
-        if (onAnimationComplete) {
-          onAnimationComplete()
+          // 1. 立即停止转盘
+          setIsSpinning(false)
+          setCurrentRotation(endRotation)
+
+          // 2. 立即显示结果（同一时刻）
+          setWinningIndex(finalIndex)
+
+          // 3. 通知结果准备好
+          if (onResultReady) {
+            onResultReady(finalIndex)
+          }
+
+          // 4. 动画完全结束
+          if (onAnimationComplete) {
+            onAnimationComplete()
+          }
         }
       }
     }
