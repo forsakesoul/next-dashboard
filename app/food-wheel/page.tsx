@@ -606,141 +606,170 @@ export default function FoodWheelPage() {
             </div>
 
             {/* 控制面板 */}
-            <div className="flex flex-col items-stretch gap-6 w-full lg:w-[400px] flex-shrink-0">
-              {/* 结果显示 */}
-              <div className="w-full rounded-2xl border-2 border-purple-500/50 bg-gradient-to-br from-purple-900/60 to-pink-900/60 backdrop-blur-xl p-6 shadow-2xl relative overflow-hidden">
-                {/* 背景动画效果 */}
-                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-orange-500/10 animate-pulse"></div>
+            <div className="flex flex-col gap-4 w-full lg:w-[380px] flex-shrink-0">
+              {/* 结果显示卡片 - 科技风格 */}
+              <div className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 backdrop-blur-xl rounded-2xl shadow-2xl border border-cyan-500/30 p-6 overflow-hidden">
+                {/* 科技感背景网格 */}
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute inset-0" style={{
+                    backgroundImage: 'linear-gradient(cyan 1px, transparent 1px), linear-gradient(90deg, cyan 1px, transparent 1px)',
+                    backgroundSize: '20px 20px'
+                  }}></div>
+                </div>
 
-                <div className="relative z-10">
-                  <div className="flex items-center justify-center gap-2 mb-4">
-                    <span className="text-2xl">🎁</span>
-                    <p className="text-sm font-bold uppercase tracking-widest text-purple-200">
-                      抽奖结果
-                    </p>
-                    <span className="text-2xl">🎁</span>
-                  </div>
+                {/* 顶部霓虹装饰线 */}
+                <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent"></div>
 
+                <div className="relative z-10 text-center">
                   {selectedOption && showConfetti ? (
-                    <div className="space-y-3 text-center animate-bounce">
-                      <div className="text-8xl drop-shadow-[0_0_15px_rgba(255,215,0,0.5)]">
+                    <div className="space-y-4">
+                      <div className="text-7xl animate-bounce drop-shadow-[0_0_20px_rgba(0,255,255,0.5)]">
                         {selectedOption.emoji}
                       </div>
-                      <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-orange-300 to-red-400 drop-shadow-lg animate-pulse">
-                        {selectedOption.name}
-                      </div>
-                      <div className="flex items-center justify-center gap-3 text-xl pt-2">
-                        <span className="animate-bounce" style={{ animationDelay: '0ms' }}>🎉</span>
-                        <span className="text-yellow-300 font-black text-2xl drop-shadow-[0_0_10px_rgba(253,224,71,0.8)]">
-                          恭喜中奖！
-                        </span>
-                        <span className="animate-bounce" style={{ animationDelay: '150ms' }}>🎊</span>
-                      </div>
-                      <div className="pt-2">
-                        <div className="inline-block px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full text-white font-bold text-sm shadow-lg">
-                          ✨ 就是它了 ✨
+                      <div>
+                        <h3 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 mb-3 drop-shadow-lg">
+                          {selectedOption.name}
+                        </h3>
+                        <div className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full text-white font-bold text-sm shadow-lg shadow-green-500/50 animate-pulse">
+                          <span className="text-base">✓</span>
+                          <span>WINNER!</span>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-3 text-center min-h-[180px] flex flex-col justify-center">
-                      <div className="text-3xl font-bold text-white">
-                        {isSpinning ? (
-                          <div className="space-y-3">
-                            <div className="inline-flex items-center gap-3 text-4xl">
-                              <span className="animate-spin">🎰</span>
-                              <span className="text-2xl bg-gradient-to-r from-yellow-200 to-orange-300 bg-clip-text text-transparent">
-                                转盘旋转中
-                              </span>
-                              <span className="animate-spin" style={{ animationDirection: 'reverse' }}>🎲</span>
-                            </div>
-                            <div className="flex justify-center gap-1">
-                              <span className="animate-bounce inline-block w-2 h-2 bg-yellow-400 rounded-full" style={{ animationDelay: '0ms' }}></span>
-                              <span className="animate-bounce inline-block w-2 h-2 bg-orange-400 rounded-full" style={{ animationDelay: '150ms' }}></span>
-                              <span className="animate-bounce inline-block w-2 h-2 bg-red-400 rounded-full" style={{ animationDelay: '300ms' }}></span>
+                    <div className="min-h-[200px] flex flex-col items-center justify-center space-y-4">
+                      {isSpinning ? (
+                        <>
+                          <div className="relative">
+                            <div className="w-16 h-16 border-4 border-cyan-900/30 border-t-cyan-400 rounded-full animate-spin shadow-lg shadow-cyan-500/50"></div>
+                            <div className="absolute inset-0 flex items-center justify-center text-2xl filter drop-shadow-[0_0_8px_rgba(0,255,255,0.8)]">
+                              ⚡
                             </div>
                           </div>
-                        ) : result ? (
-                          <div className="space-y-2">
-                            <div className="text-5xl">🎯</div>
-                            <div className="text-2xl text-emerald-300 font-black">{result}</div>
+                          <p className="text-lg font-bold text-cyan-300 tracking-wider uppercase">
+                            Processing...
+                          </p>
+                        </>
+                      ) : result ? (
+                        <>
+                          <div className="text-6xl drop-shadow-[0_0_15px_rgba(139,92,246,0.6)]">🎯</div>
+                          <div>
+                            <p className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 mb-1">
+                              {result}
+                            </p>
+                            <p className="text-sm text-cyan-300 font-medium">
+                              SELECTED
+                            </p>
                           </div>
-                        ) : (
-                          <div className="space-y-3">
-                            <div className="text-6xl">🍀</div>
-                            <div className="text-xl text-gray-300">准备开始</div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="text-6xl mb-2 drop-shadow-[0_0_15px_rgba(6,182,212,0.5)]">🎰</div>
+                          <div>
+                            <p className="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 mb-1">
+                              今天吃什么？
+                            </p>
+                            <p className="text-sm text-cyan-300/80 font-medium tracking-wide">
+                              CLICK TO START
+                            </p>
                           </div>
-                        )}
-                      </div>
-                      <p className="text-sm text-gray-300 font-medium">
-                        {isSpinning ? '🌟 命运之轮正在转动...' : result ? '🎊 就决定是它了！' : '💫 点击下方按钮开始抽奖'}
-                      </p>
+                        </>
+                      )}
                     </div>
                   )}
                 </div>
+
+                {/* 底部霓虹装饰线 */}
+                <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400 to-transparent"></div>
               </div>
 
-              {/* 抽奖按钮 */}
+              {/* 抽奖按钮 - 霓虹科技风 */}
               <button
                 onClick={handleSpin}
                 disabled={isSpinning}
-                className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 p-[3px] shadow-2xl transition-all duration-300 hover:scale-110 hover:shadow-[0_0_40px_rgba(249,115,22,0.8)] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:animate-pulse"
+                className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 p-[2px] shadow-xl shadow-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/70 transform hover:scale-105 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
-                <div className="relative rounded-2xl bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 px-10 py-4 transition-all duration-300 group-hover:from-orange-500 group-hover:via-red-500 group-hover:to-pink-500">
-                  <div className="flex items-center justify-center gap-3 text-xl font-black text-white">
+                {/* 动态光晕效果 */}
+                <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300"></div>
+
+                <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg px-6 py-4">
+                  <div className="flex items-center justify-center gap-3 text-lg font-black">
                     {isSpinning ? (
                       <>
-                        <span className="animate-spin text-3xl">⚡</span>
-                        <span className="tracking-wider">转动中...</span>
-                        <span className="animate-spin text-3xl" style={{ animationDirection: 'reverse' }}>⚡</span>
+                        <span className="animate-spin text-cyan-400 text-2xl drop-shadow-[0_0_8px_rgba(0,255,255,0.8)]">⚡</span>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 tracking-wider">
+                          ROLLING
+                        </span>
+                        <span className="animate-spin text-pink-400 text-2xl drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]" style={{ animationDirection: 'reverse' }}>⚡</span>
                       </>
                     ) : (
                       <>
-                        <span className="text-2xl group-hover:scale-125 transition-transform duration-300">🎲</span>
-                        <span className="tracking-wider">{result ? '再来一次' : '开始抽奖'}</span>
-                        <span className="text-2xl group-hover:scale-125 transition-transform duration-300">🎲</span>
+                        <span className="text-2xl group-hover:scale-125 transition-transform duration-300 filter drop-shadow-[0_0_8px_rgba(139,92,246,0.8)]">🎲</span>
+                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-300 tracking-wider">
+                          {result ? 'SPIN AGAIN' : 'START GAME'}
+                        </span>
                       </>
                     )}
                   </div>
                 </div>
               </button>
 
-              {/* 美食列表 */}
-              <div className="w-full rounded-2xl border-2 border-orange-500/50 bg-gradient-to-br from-orange-900/30 to-red-900/30 backdrop-blur-xl p-5 shadow-2xl">
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <span className="text-xl">🍽️</span>
-                  <h2 className="text-sm font-bold uppercase tracking-widest text-orange-200">
-                    美食候选
-                  </h2>
-                  <span className="text-xl">🍽️</span>
+              {/* 美食列表 - 科技卡片风格 */}
+              <div className="relative bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-900 backdrop-blur-xl rounded-2xl shadow-2xl border border-indigo-500/30 p-4 overflow-hidden">
+                {/* 背景网格 */}
+                <div className="absolute inset-0 opacity-5">
+                  <div className="absolute inset-0" style={{
+                    backgroundImage: 'linear-gradient(indigo 1px, transparent 1px), linear-gradient(90deg, indigo 1px, transparent 1px)',
+                    backgroundSize: '15px 15px'
+                  }}></div>
                 </div>
-                <ul className="grid grid-cols-2 gap-3">
-                  {FOOD_OPTIONS.map((option, index) => (
-                    <li
-                      key={option.id}
-                      className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-sm px-3 py-3 transition-all duration-300 hover:scale-110 hover:from-white/25 hover:to-white/15 border-2 border-white/20 hover:border-orange-400/60 shadow-lg hover:shadow-orange-500/30"
-                      style={{ animationDelay: `${index * 50}ms` }}
-                    >
-                      {/* 悬停时的发光效果 */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-orange-400/0 via-orange-400/20 to-orange-400/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                      <div className="relative flex items-center gap-2">
-                        <span className="text-2xl group-hover:scale-125 transition-transform duration-300 drop-shadow-lg">
-                          {option.emoji}
-                        </span>
-                        <span className="text-sm font-bold text-white truncate group-hover:text-orange-200 transition-colors duration-300">
-                          {option.name}
-                        </span>
+                <div className="relative z-10">
+                  <div className="flex items-center justify-between mb-4 pb-2 border-b border-indigo-500/30">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]">🍽️</span>
+                      <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 tracking-wider uppercase">
+                        Options
+                      </h3>
+                    </div>
+                    <span className="text-xs font-bold text-indigo-300 bg-indigo-500/20 px-2 py-1 rounded-full">
+                      {FOOD_OPTIONS.length}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {FOOD_OPTIONS.map((option) => (
+                      <div
+                        key={option.id}
+                        className={`
+                          relative rounded-lg p-2.5 transition-all duration-300 border
+                          ${selectedOption?.id === option.id && showConfetti
+                            ? 'bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border-yellow-400 shadow-lg shadow-yellow-500/50 scale-105 animate-pulse'
+                            : 'bg-slate-800/50 border-slate-700/50 hover:bg-slate-700/70 hover:border-indigo-500/50 hover:shadow-lg hover:shadow-indigo-500/30 hover:scale-105'
+                          }
+                        `}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className={`text-xl transition-transform duration-300 ${selectedOption?.id === option.id && showConfetti ? 'scale-125 drop-shadow-[0_0_10px_rgba(234,179,8,0.8)]' : ''}`}>
+                            {option.emoji}
+                          </span>
+                          <span className={`text-xs font-bold truncate ${selectedOption?.id === option.id && showConfetti ? 'text-yellow-300' : 'text-slate-300'}`}>
+                            {option.name}
+                          </span>
+                        </div>
+
+                        {selectedOption?.id === option.id && showConfetti && (
+                          <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center shadow-lg shadow-green-500/50 animate-bounce">
+                            <span className="text-white text-xs font-black">✓</span>
+                          </div>
+                        )}
+
+                        {/* 悬停发光效果 */}
+                        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-indigo-500/0 via-indigo-500/10 to-indigo-500/0 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
                       </div>
-
-                      {/* 高亮中奖项 */}
-                      {selectedOption?.id === option.id && showConfetti && (
-                        <div className="absolute inset-0 border-2 border-yellow-400 rounded-xl animate-pulse bg-yellow-400/20"></div>
-                      )}
-                    </li>
-                  ))}
-                </ul>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
