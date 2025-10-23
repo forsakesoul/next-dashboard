@@ -9,6 +9,7 @@ import { useState, useCallback } from 'react'
 import foodOptionsConfig from './food-options.json'
 import WheelCanvas from './components/WheelCanvas'
 import ControlPanel from './components/ControlPanel'
+import Confetti from './components/Confetti'
 import { useWheelAnimation } from './hooks/useWheelAnimation'
 import { useWeightedSpin } from './hooks/useWeightedSpin'
 import { useGlowEffect } from './hooks/useGlowEffect'
@@ -23,9 +24,25 @@ export default function FoodWheelPage() {
   // 使用自定义 Hooks
   const animation = useWheelAnimation({
     segmentCount: options.length,
-    onAnimationComplete: (winningIndex) => {
-      // 动画完成回调
-      console.log('Animation completed, winning index:', winningIndex)
+    onResultReady: (winningIndex) => {
+      // 结果准备好 - 立即显示结果
+      console.log('🎉 Result ready, winning index:', winningIndex)
+
+      const winningOption = options[winningIndex]
+      if (winningOption) {
+        weightedSpin.setSelectedOption(winningOption)
+        weightedSpin.setResult(winningOption.name)
+        setShowConfetti(true)
+
+        // 3秒后隐藏庆祝效果
+        setTimeout(() => {
+          setShowConfetti(false)
+        }, 3000)
+      }
+    },
+    onAnimationComplete: () => {
+      // 动画完全结束（转盘已停止）
+      console.log('✅ Animation fully complete - wheel stopped')
     },
   })
 
@@ -42,35 +59,30 @@ export default function FoodWheelPage() {
     }
 
     try {
-      // 1. 重置之前的结果
+      // 1. 立即重置状态并启动UI反馈（不阻塞）
       weightedSpin.setSelectedOption(null)
       weightedSpin.setResult(null)
       setShowConfetti(false)
 
-      // 2. 执行加权随机选择
-      const { index, option } = weightedSpin.spin()
+      // 2. 使用 queueMicrotask 确保UI立即更新
+      queueMicrotask(() => {
+        try {
+          // 执行加权随机选择
+          const { index, option } = weightedSpin.spin()
+          console.log('🎲 Selected option:', option.name, 'at index:', index)
 
-      // 3. 启动转盘动画
-      animation.startSpin(index)
-
-      // 4. 等待动画完成后显示结果
-      // 使用 setTimeout 确保动画播放完整
-      setTimeout(
-        () => {
-          weightedSpin.setSelectedOption(option)
-          weightedSpin.setResult(option.name)
-          setShowConfetti(true)
-
-          // 3秒后隐藏庆祝效果
-          setTimeout(() => {
-            setShowConfetti(false)
-          }, 3000)
-        },
-        4000 + 1000 // 动画时长 + 缓冲时间
-      )
+          // 启动转盘动画（动画完成后会触发 onAnimationComplete 回调）
+          animation.startSpin(index)
+        } catch (error) {
+          console.error('Error during spin:', error)
+          // 容错：重置状态
+          animation.reset()
+          weightedSpin.reset()
+          setShowConfetti(false)
+        }
+      })
     } catch (error) {
-      console.error('Error during spin:', error)
-      // 容错：重置状态
+      console.error('Error in handleSpin:', error)
       animation.reset()
       weightedSpin.reset()
       setShowConfetti(false)
@@ -79,6 +91,9 @@ export default function FoodWheelPage() {
 
   return (
     <>
+      {/* 粒子烟花庆祝动画 */}
+      <Confetti show={showConfetti} duration={3000} />
+
       {/* 全局样式 */}
       <style jsx global>{`
         @keyframes float {
@@ -103,12 +118,27 @@ export default function FoodWheelPage() {
           }
         }
 
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
         .float-animation {
           animation: float 3s ease-in-out infinite;
         }
 
         .neon-text {
           animation: neon-pulse 2s ease-in-out infinite;
+        }
+
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
         }
 
         body {

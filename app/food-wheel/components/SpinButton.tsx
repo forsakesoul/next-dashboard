@@ -19,11 +19,19 @@ interface SpinButtonProps {
  * 抽奖按钮 - 霓虹科技风
  */
 function SpinButton({ isSpinning, hasResult, onSpin }: SpinButtonProps) {
+  const handleClick = () => {
+    // 添加触觉反馈（移动端）
+    if ('vibrate' in navigator) {
+      navigator.vibrate(50)
+    }
+    onSpin()
+  }
+
   return (
     <button
-      onClick={onSpin}
+      onClick={handleClick}
       disabled={isSpinning}
-      className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 p-[2px] shadow-xl shadow-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/70 transform hover:scale-105 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+      className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 p-[2px] shadow-xl shadow-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/70 transform hover:scale-105 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
     >
       {/* 动态光晕效果 */}
       <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300"></div>

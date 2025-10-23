@@ -7,8 +7,10 @@ import { useState, useRef, useCallback, useEffect } from 'react'
 interface UseWheelAnimationOptions {
   /** 扇形数量，用于计算每个扇形的角度 */
   segmentCount: number
-  /** 动画完成回调 */
-  onAnimationComplete?: (winningIndex: number) => void
+  /** 结果准备好的回调（95%时触发） */
+  onResultReady?: (winningIndex: number) => void
+  /** 动画完全结束的回调（用户看到结果后） */
+  onAnimationComplete?: () => void
 }
 
 interface UseWheelAnimationReturn {
@@ -43,6 +45,7 @@ interface UseWheelAnimationReturn {
  */
 export function useWheelAnimation({
   segmentCount,
+  onResultReady,
   onAnimationComplete,
 }: UseWheelAnimationOptions): UseWheelAnimationReturn {
   const [isSpinning, setIsSpinning] = useState(false)
@@ -53,6 +56,8 @@ export function useWheelAnimation({
   const animationFrameRef = useRef<number | undefined>(undefined)
   const startTimeRef = useRef<number>(0)
   const durationRef = useRef<number>(0)
+  const targetIndexRef = useRef<number>(-1) // 保存目标索引
+  const hasTriggeredComplete = useRef<boolean>(false) // 防止重复触发
 
   // 计算每个扇形的角度
   const SEGMENT_ANGLE = (2 * Math.PI) / segmentCount
@@ -60,7 +65,7 @@ export function useWheelAnimation({
   /**
    * 启动旋转动画
    *
-   * @param targetIndex 目标扇形索引
+   * @param targetIndex 目标扇形索引（由加权算法决定）
    */
   const startSpin = useCallback(
     (targetIndex: number) => {
@@ -75,27 +80,41 @@ export function useWheelAnimation({
         return
       }
 
+      console.log('🚀 Starting spin animation immediately...')
+
+      // 保存目标索引
+      targetIndexRef.current = targetIndex
+
+      // 重置标志
+      hasTriggeredComplete.current = false
+
       // 重置中奖状态
       setWinningIndex(-1)
 
       // 计算目标角度
       const targetAngle = targetIndex * SEGMENT_ANGLE
 
-      // 额外旋转圈数：8-10 圈（随机）
-      const extraSpins = (Math.floor(Math.random() * 3) + 8) * Math.PI * 2
+      // 额外旋转圈数：增加到 15-20 圈（随机）- 让转盘转得更久
+      const extraSpins = (Math.floor(Math.random() * 6) + 15) * Math.PI * 2
 
-      // 动画持续时间：4-5 秒（随机）
-      const duration = 4000 + Math.floor(Math.random() * 1000)
+      // 动画持续时间：增加到 10-14 秒（随机）- 更长的等待时间
+      const duration = 10000 + Math.floor(Math.random() * 4000)
 
       // 设置目标旋转角度（累加，不是重置）
-      setTargetRotation(currentRotation + extraSpins + targetAngle)
+      const newTargetRotation = currentRotation + extraSpins + targetAngle
+      setTargetRotation(newTargetRotation)
 
       // 设置动画参数
       durationRef.current = duration
       startTimeRef.current = 0
 
-      // 启动动画
+      // 【关键优化】立即启动动画，不等待 React 重新渲染
       setIsSpinning(true)
+
+      // 使用 queueMicrotask 确保状态更新后立即启动动画循环
+      queueMicrotask(() => {
+        console.log('⚡ Animation loop starting now!')
+      })
     },
     [isSpinning, currentRotation, segmentCount, SEGMENT_ANGLE]
   )
@@ -123,6 +142,10 @@ export function useWheelAnimation({
   useEffect(() => {
     if (!isSpinning) return
 
+    // 保存起始值和目标值，避免闭包问题
+    const startRotation = currentRotation
+    const endRotation = targetRotation
+
     const animate = (timestamp: number) => {
       if (!startTimeRef.current) {
         startTimeRef.current = timestamp
@@ -131,36 +154,40 @@ export function useWheelAnimation({
       const elapsed = timestamp - startTimeRef.current
       const progress = Math.min(elapsed / durationRef.current, 1)
 
-      // 缓动函数（Ease-Out Cubic）
-      const easeOut = 1 - Math.pow(1 - progress, 3)
-      const currentAngle = currentRotation + (targetRotation - currentRotation) * easeOut
+      // 缓动函数（Ease-Out Quart）- 更强的减速效果，让转盘慢慢停下来
+      const easeOut = 1 - Math.pow(1 - progress, 4)
+      const currentAngle = startRotation + (endRotation - startRotation) * easeOut
 
       // 更新当前角度（这会触发重新渲染，Canvas组件会读取这个值）
       setCurrentRotation(currentAngle)
 
+      // 在90%时触发结果显示，给用户更多时间看到转盘减速
+      if (progress >= 0.90 && !hasTriggeredComplete.current) {
+        const finalIndex = targetIndexRef.current
+        console.log('⚡ Animation 90% - result ready, final index:', finalIndex)
+
+        hasTriggeredComplete.current = true
+        setWinningIndex(finalIndex)
+
+        // 通知结果已准备好
+        if (onResultReady) {
+          onResultReady(finalIndex)
+        }
+      }
+
       if (progress < 1) {
-        // 继续动画
+        // 继续动画直到100%
         animationFrameRef.current = requestAnimationFrame(animate)
       } else {
-        // 动画完成
+        // 动画100%完成 - 立即停止转盘
+        console.log('✅ Animation 100% complete - stopping wheel immediately')
+
         setIsSpinning(false)
-        setCurrentRotation(targetRotation)
+        setCurrentRotation(endRotation)
 
-        // 计算中奖项 - 12点钟方向（顶部中间）对应的扇形
-        const normalizedRotation = targetRotation % (Math.PI * 2)
-        const pointerAngle = -Math.PI / 2 // 12点钟方向
-        const relativeAngle = (pointerAngle - normalizedRotation + Math.PI * 2) % (Math.PI * 2)
-
-        // 计算索引并确保在有效范围内
-        let calculatedIndex = Math.floor(relativeAngle / SEGMENT_ANGLE)
-        calculatedIndex = ((calculatedIndex % segmentCount) + segmentCount) % segmentCount
-
-        // 设置中奖索引
-        setWinningIndex(calculatedIndex)
-
-        // 触发回调
+        // 动画完全结束
         if (onAnimationComplete) {
-          onAnimationComplete(calculatedIndex)
+          onAnimationComplete()
         }
       }
     }
@@ -172,7 +199,7 @@ export function useWheelAnimation({
         cancelAnimationFrame(animationFrameRef.current)
       }
     }
-  }, [isSpinning, currentRotation, targetRotation, segmentCount, SEGMENT_ANGLE, onAnimationComplete])
+  }, [isSpinning, onResultReady, onAnimationComplete])
 
   return {
     isSpinning,

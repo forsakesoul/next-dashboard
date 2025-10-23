@@ -59,18 +59,34 @@ function ResultCard({ selectedOption, isSpinning, showConfetti, result }: Result
         ) : (
           <div className="min-h-[200px] flex flex-col items-center justify-center space-y-4">
             {isSpinning ? (
-              // 旋转中状态
-              <>
+              // 旋转中状态 - 添加立即出现的动画
+              <div className="animate-fadeIn">
                 <div className="relative">
                   <div className="w-16 h-16 border-4 border-cyan-900/30 border-t-cyan-400 rounded-full animate-spin shadow-lg shadow-cyan-500/50"></div>
-                  <div className="absolute inset-0 flex items-center justify-center text-2xl filter drop-shadow-[0_0_8px_rgba(0,255,255,0.8)]">
+                  <div className="absolute inset-0 flex items-center justify-center text-2xl filter drop-shadow-[0_0_8px_rgba(0,255,255,0.8)] animate-pulse">
                     ⚡
                   </div>
                 </div>
-                <p className="text-lg font-bold text-cyan-300 tracking-wider uppercase">
-                  Processing...
-                </p>
-              </>
+                <div className="mt-4 space-y-2">
+                  <p className="text-lg font-bold text-cyan-300 tracking-wider uppercase animate-pulse">
+                    ROLLING...
+                  </p>
+                  <div className="flex justify-center gap-1">
+                    <span
+                      className="w-2 h-2 bg-cyan-400 rounded-full animate-bounce shadow-lg shadow-cyan-500/50"
+                      style={{ animationDelay: '0ms' }}
+                    ></span>
+                    <span
+                      className="w-2 h-2 bg-purple-400 rounded-full animate-bounce shadow-lg shadow-purple-500/50"
+                      style={{ animationDelay: '150ms' }}
+                    ></span>
+                    <span
+                      className="w-2 h-2 bg-pink-400 rounded-full animate-bounce shadow-lg shadow-pink-500/50"
+                      style={{ animationDelay: '300ms' }}
+                    ></span>
+                  </div>
+                </div>
+              </div>
             ) : result ? (
               // 有结果但未显示庆祝效果
               <>

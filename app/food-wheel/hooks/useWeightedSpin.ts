@@ -62,18 +62,21 @@ export function useWeightedSpin(options: FoodOption[]): UseWeightedSpinReturn {
       // 计算当前时间的权重
       const weightedOptions = calculateAllWeights(options)
 
-      // 调试信息：显示当前权重分布
+      // 调试信息：显示当前权重分布（优化性能，避免阻塞）
       if (process.env.NODE_ENV === 'development') {
-        console.group('🎲 权重抽奖信息')
-        console.log('当前时间:', new Date().toLocaleTimeString())
-        weightedOptions.forEach((opt) => {
+        // 使用 setTimeout 异步打印，不阻塞主线程
+        setTimeout(() => {
+          console.group('🎲 权重抽奖信息')
+          console.log('当前时间:', new Date().toLocaleTimeString())
           const totalWeight = weightedOptions.reduce((sum, o) => sum + o.currentWeight, 0)
-          const probability = ((opt.currentWeight / totalWeight) * 100).toFixed(2)
-          console.log(
-            `${opt.emoji} ${opt.name}: 权重=${opt.currentWeight.toFixed(2)}, 概率=${probability}%`
-          )
-        })
-        console.groupEnd()
+          weightedOptions.forEach((opt) => {
+            const probability = ((opt.currentWeight / totalWeight) * 100).toFixed(2)
+            console.log(
+              `${opt.emoji} ${opt.name}: 权重=${opt.currentWeight.toFixed(2)}, 概率=${probability}%`
+            )
+          })
+          console.groupEnd()
+        }, 0)
       }
 
       // 加权随机选择
