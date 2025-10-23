@@ -1,10 +1,130 @@
-[
-  { "id": 1, "name": "西部马华", "color": "#FF6B6B", "emoji": "🍜" },
-  { "id": 2, "name": "地下美食", "color": "#4ECDC4", "emoji": "🍱" },
-  { "id": 3, "name": "煲仔饭", "color": "#45B7D1", "emoji": "🍲" },
-  { "id": 4, "name": "晋来顺", "color": "#FFA07A", "emoji": "🥘" },
-  { "id": 5, "name": "陕一哥", "color": "#98D8C8", "emoji": "🍝" },
-  { "id": 6, "name": "十街", "color": "#F7B731", "emoji": "🍛" },
-  { "id": 7, "name": "品渡", "color": "#5F27CD", "emoji": "🍣" },
-  { "id": 8, "name": "冒菜", "color": "#00D2D3", "emoji": "🥗" }
-]
+{
+  "options": [
+    {
+      "id": 1,
+      "name": "西部马华",
+      "color": "#FF6B6B",
+      "emoji": "🍜",
+      "baseWeight": 1,
+      "timeBoosts": [
+        {
+          "name": "午餐时段",
+          "startHour": 11,
+          "endHour": 14,
+          "multiplier": 2.0
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "地下美食",
+      "color": "#4ECDC4",
+      "emoji": "🍱",
+      "baseWeight": 1,
+      "timeBoosts": [
+        {
+          "name": "午餐时段",
+          "startHour": 11,
+          "endHour": 14,
+          "multiplier": 2.0
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "煲仔饭",
+      "color": "#45B7D1",
+      "emoji": "🍲",
+      "baseWeight": 1,
+      "timeBoosts": [
+        {
+          "name": "午餐时段",
+          "startHour": 11,
+          "endHour": 14,
+          "multiplier": 2.0
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "晋来顺",
+      "color": "#FFA07A",
+      "emoji": "🥘",
+      "baseWeight": 1,
+      "timeBoosts": []
+    },
+    {
+      "id": 5,
+      "name": "陕一哥",
+      "color": "#98D8C8",
+      "emoji": "🍝",
+      "baseWeight": 1,
+      "timeBoosts": [
+        {
+          "name": "午餐时段",
+          "startHour": 11,
+          "endHour": 14,
+          "multiplier": 2.0
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "十街",
+      "color": "#F7B731",
+      "emoji": "🍛",
+      "baseWeight": 1,
+      "timeBoosts": [
+        {
+          "name": "下午茶时段",
+          "startHour": 16,
+          "endHour": 23,
+          "multiplier": 2.0
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "品渡",
+      "color": "#5F27CD",
+      "emoji": "🍣",
+      "baseWeight": 1,
+      "timeBoosts": [
+        {
+          "name": "下午茶时段",
+          "startHour": 16,
+          "endHour": 23,
+          "multiplier": 2.0
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "冒菜",
+      "color": "#00D2D3",
+      "emoji": "🥗",
+      "baseWeight": 1,
+      "timeBoosts": [
+        {
+          "name": "下午茶时段",
+          "startHour": 16,
+          "endHour": 23,
+          "multiplier": 2.0
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "name": "食堂",
+      "color": "#95A5A6",
+      "emoji": "🍽️",
+      "baseWeight": 0.3,
+      "timeBoosts": []
+    }
+  ],
+  "metadata": {
+    "version": "2.0",
+    "lastUpdated": "2025-01-23",
+    "description": "美食选项配置，支持时间段权重加成"
+  }
+}
