@@ -16,7 +16,6 @@ const SEGMENT_ANGLE = (2 * Math.PI) / FOOD_OPTIONS.length
 
 export default function FoodWheelPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const confettiCanvasRef = useRef<HTMLCanvasElement>(null)
   const [isSpinning, setIsSpinning] = useState(false)
   const [currentRotation, setCurrentRotation] = useState(0)
   const [targetRotation, setTargetRotation] = useState(0)
@@ -29,15 +28,6 @@ export default function FoodWheelPage() {
   const glowAnimationRef = useRef<number>()
   const startTimeRef = useRef<number>(0)
   const durationRef = useRef<number>(0)
-  const particlesRef = useRef<Array<{
-    x: number
-    y: number
-    vx: number
-    vy: number
-    color: string
-    size: number
-    life: number
-  }>>([])
 
   // 绘制转盘
   const drawWheel = (ctx: CanvasRenderingContext2D, angle: number, spinning: boolean = false) => {
@@ -313,6 +303,7 @@ export default function FoodWheelPage() {
     ctx.restore()
   }
 
+
   // 动画循环
   useEffect(() => {
     const canvas = canvasRef.current
@@ -360,7 +351,6 @@ export default function FoodWheelPage() {
           setResult(winner.name)
           setSelectedOption(winner)
           setShowConfetti(true)
-          createConfetti(winner.color)
 
           setTimeout(() => setShowConfetti(false), 3000)
         } else {
@@ -371,7 +361,6 @@ export default function FoodWheelPage() {
           setResult(fallbackWinner.name)
           setSelectedOption(fallbackWinner)
           setShowConfetti(true)
-          createConfetti(fallbackWinner.color)
           setTimeout(() => setShowConfetti(false), 3000)
         }
       }
@@ -416,77 +405,6 @@ export default function FoodWheelPage() {
     }
   }, [winningIndex])
 
-  // 粒子效果
-  const createConfetti = (color: string) => {
-    const canvas = confettiCanvasRef.current
-    if (!canvas) return
-
-    const particles: typeof particlesRef.current = []
-    const centerX = canvas.width / 2
-    const centerY = canvas.height / 2
-
-    for (let i = 0; i < 60; i++) {
-      const angle = (Math.PI * 2 * i) / 60
-      const velocity = 4 + Math.random() * 6
-      particles.push({
-        x: centerX,
-        y: centerY,
-        vx: Math.cos(angle) * velocity,
-        vy: Math.sin(angle) * velocity,
-        color,
-        size: 3 + Math.random() * 5,
-        life: 1,
-      })
-    }
-
-    particlesRef.current = particles
-  }
-
-  useEffect(() => {
-    const canvas = confettiCanvasRef.current
-    if (!canvas || particlesRef.current.length === 0) return
-
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    let animationId: number
-
-    const animateParticles = () => {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-
-      particlesRef.current = particlesRef.current
-        .map(p => ({
-          ...p,
-          x: p.x + p.vx,
-          y: p.y + p.vy,
-          vy: p.vy + 0.3,
-          life: p.life - 0.01,
-        }))
-        .filter(p => p.life > 0)
-
-      particlesRef.current.forEach(p => {
-        ctx.fillStyle = p.color
-        ctx.globalAlpha = p.life
-        ctx.beginPath()
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
-        ctx.fill()
-      })
-
-      ctx.globalAlpha = 1
-
-      if (particlesRef.current.length > 0) {
-        animationId = requestAnimationFrame(animateParticles)
-      }
-    }
-
-    animationId = requestAnimationFrame(animateParticles)
-
-    return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId)
-      }
-    }
-  }, [showConfetti])
 
   const handleSpin = () => {
     if (isSpinning) return
@@ -567,14 +485,6 @@ export default function FoodWheelPage() {
             {/* 转盘区域 */}
             <div className="relative flex items-center justify-center flex-shrink-0">
               <div className="relative w-[350px] h-[350px] max-w-[80vw] max-h-[80vw]">
-                {/* 粒子画布 */}
-                <canvas
-                  ref={confettiCanvasRef}
-                  width={350}
-                  height={350}
-                  className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20"
-                />
-
                 {/* 转盘画布 */}
                 <canvas
                   ref={canvasRef}
