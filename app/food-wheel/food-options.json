@@ -1,0 +1,10 @@
+[
+  { "id": 1, "name": "西部马华", "color": "#FF6B6B", "emoji": "🍜" },
+  { "id": 2, "name": "地下美食", "color": "#4ECDC4", "emoji": "🍱" },
+  { "id": 3, "name": "煲仔饭", "color": "#45B7D1", "emoji": "🍲" },
+  { "id": 4, "name": "晋来顺", "color": "#FFA07A", "emoji": "🥘" },
+  { "id": 5, "name": "陕一哥", "color": "#98D8C8", "emoji": "🍝" },
+  { "id": 6, "name": "十街", "color": "#F7B731", "emoji": "🍛" },
+  { "id": 7, "name": "品渡", "color": "#5F27CD", "emoji": "🍣" },
+  { "id": 8, "name": "冒菜", "color": "#00D2D3", "emoji": "🥗" }
+]

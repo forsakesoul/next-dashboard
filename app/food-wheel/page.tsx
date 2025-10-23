@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import foodOptionsData from './food-options.json'
 
 type FoodOption = {
   id: number
@@ -9,23 +10,13 @@ type FoodOption = {
   emoji: string
 }
 
-const FOOD_OPTIONS: FoodOption[] = [
-  { id: 1, name: '西部马华', color: '#FF6B6B', emoji: '🍜' },
-  { id: 2, name: '地下美食', color: '#4ECDC4', emoji: '🍱' },
-  { id: 3, name: '煲仔饭', color: '#45B7D1', emoji: '🍲' },
-  { id: 4, name: '晋来顺', color: '#FFA07A', emoji: '🥘' },
-  { id: 5, name: '陕一哥', color: '#98D8C8', emoji: '🍝' },
-  { id: 6, name: '十街', color: '#F7B731', emoji: '🍛' },
-  { id: 7, name: '品渡', color: '#5F27CD', emoji: '🍣' },
-  { id: 8, name: '冒菜', color: '#00D2D3', emoji: '🥗' },
-]
+const FOOD_OPTIONS: FoodOption[] = foodOptionsData
 
 const SEGMENT_ANGLE = (2 * Math.PI) / FOOD_OPTIONS.length
 
 export default function FoodWheelPage() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const confettiCanvasRef = useRef<HTMLCanvasElement>(null)
-  const [rotation, setRotation] = useState(0)
   const [isSpinning, setIsSpinning] = useState(false)
   const [currentRotation, setCurrentRotation] = useState(0)
   const [targetRotation, setTargetRotation] = useState(0)
@@ -357,16 +348,32 @@ export default function FoodWheelPage() {
         const pointerAngle = -Math.PI / 2
         // 计算指针相对于转盘的角度
         const relativeAngle = (pointerAngle - normalizedRotation + Math.PI * 2) % (Math.PI * 2)
-        const calculatedIndex = Math.floor(relativeAngle / SEGMENT_ANGLE) % FOOD_OPTIONS.length
+        // 确保索引在有效范围内
+        let calculatedIndex = Math.floor(relativeAngle / SEGMENT_ANGLE)
+        calculatedIndex = ((calculatedIndex % FOOD_OPTIONS.length) + FOOD_OPTIONS.length) % FOOD_OPTIONS.length
+
         const winner = FOOD_OPTIONS[calculatedIndex]
 
-        setWinningIndex(calculatedIndex)
-        setResult(winner.name)
-        setSelectedOption(winner)
-        setShowConfetti(true)
-        createConfetti(winner.color)
+        // 确保 winner 存在
+        if (winner) {
+          setWinningIndex(calculatedIndex)
+          setResult(winner.name)
+          setSelectedOption(winner)
+          setShowConfetti(true)
+          createConfetti(winner.color)
 
-        setTimeout(() => setShowConfetti(false), 3000)
+          setTimeout(() => setShowConfetti(false), 3000)
+        } else {
+          console.error('Invalid winner index:', calculatedIndex)
+          // 如果出错，默认选择第一个选项
+          const fallbackWinner = FOOD_OPTIONS[0]
+          setWinningIndex(0)
+          setResult(fallbackWinner.name)
+          setSelectedOption(fallbackWinner)
+          setShowConfetti(true)
+          createConfetti(fallbackWinner.color)
+          setTimeout(() => setShowConfetti(false), 3000)
+        }
       }
     }
 
@@ -556,15 +563,15 @@ export default function FoodWheelPage() {
           </header>
 
           {/* 主要内容 */}
-          <div className="grid w-full gap-10 lg:grid-cols-[1fr_auto] items-start justify-items-center">
+          <div className="flex flex-col lg:flex-row w-full gap-8 items-center lg:items-start justify-center">
             {/* 转盘区域 */}
-            <div className="relative flex items-center justify-center w-full lg:justify-end">
-              <div className="relative">
+            <div className="relative flex items-center justify-center flex-shrink-0">
+              <div className="relative w-[350px] h-[350px] max-w-[80vw] max-h-[80vw]">
                 {/* 粒子画布 */}
                 <canvas
                   ref={confettiCanvasRef}
-                  width={500}
-                  height={500}
+                  width={350}
+                  height={350}
                   className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-20"
                 />
 
@@ -594,53 +601,79 @@ export default function FoodWheelPage() {
                       handleSpin()
                     }
                   }}
-                  style={{
-                    maxWidth: '90vw',
-                    maxHeight: '90vw',
-                    width: '500px',
-                    height: '500px'
-                  }}
                 />
               </div>
             </div>
 
             {/* 控制面板 */}
-            <div className="flex flex-col items-center lg:items-start gap-5 w-full lg:w-auto lg:min-w-[320px]">
+            <div className="flex flex-col items-stretch gap-6 w-full lg:w-[400px] flex-shrink-0">
               {/* 结果显示 */}
-              <div className="w-full rounded-xl border-2 border-purple-500/30 bg-gradient-to-br from-purple-900/40 to-pink-900/40 backdrop-blur-xl p-5 shadow-xl">
-                <div className="relative">
-                  <p className="text-xs font-bold uppercase tracking-wider text-purple-300 mb-3">
-                    🎁 抽奖结果
-                  </p>
+              <div className="w-full rounded-2xl border-2 border-purple-500/50 bg-gradient-to-br from-purple-900/60 to-pink-900/60 backdrop-blur-xl p-6 shadow-2xl relative overflow-hidden">
+                {/* 背景动画效果 */}
+                <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-pink-500/10 to-orange-500/10 animate-pulse"></div>
+
+                <div className="relative z-10">
+                  <div className="flex items-center justify-center gap-2 mb-4">
+                    <span className="text-2xl">🎁</span>
+                    <p className="text-sm font-bold uppercase tracking-widest text-purple-200">
+                      抽奖结果
+                    </p>
+                    <span className="text-2xl">🎁</span>
+                  </div>
 
                   {selectedOption && showConfetti ? (
-                    <div className="space-y-2 text-center">
-                      <div className="text-6xl">{selectedOption.emoji}</div>
-                      <div className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-orange-400 to-red-500">
+                    <div className="space-y-3 text-center animate-bounce">
+                      <div className="text-8xl drop-shadow-[0_0_15px_rgba(255,215,0,0.5)]">
+                        {selectedOption.emoji}
+                      </div>
+                      <div className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-200 via-orange-300 to-red-400 drop-shadow-lg animate-pulse">
                         {selectedOption.name}
                       </div>
-                      <div className="flex items-center justify-center gap-2 text-lg">
-                        <span>🎉</span>
-                        <span className="text-yellow-300 font-bold">恭喜中奖！</span>
-                        <span>🎉</span>
+                      <div className="flex items-center justify-center gap-3 text-xl pt-2">
+                        <span className="animate-bounce" style={{ animationDelay: '0ms' }}>🎉</span>
+                        <span className="text-yellow-300 font-black text-2xl drop-shadow-[0_0_10px_rgba(253,224,71,0.8)]">
+                          恭喜中奖！
+                        </span>
+                        <span className="animate-bounce" style={{ animationDelay: '150ms' }}>🎊</span>
+                      </div>
+                      <div className="pt-2">
+                        <div className="inline-block px-4 py-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full text-white font-bold text-sm shadow-lg">
+                          ✨ 就是它了 ✨
+                        </div>
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-2 text-center">
-                      <div className="text-2xl font-bold text-white">
+                    <div className="space-y-3 text-center min-h-[180px] flex flex-col justify-center">
+                      <div className="text-3xl font-bold text-white">
                         {isSpinning ? (
-                          <span className="inline-flex items-center gap-2">
-                            <span className="animate-spin text-3xl">🎰</span>
-                            <span>转盘旋转中...</span>
-                          </span>
+                          <div className="space-y-3">
+                            <div className="inline-flex items-center gap-3 text-4xl">
+                              <span className="animate-spin">🎰</span>
+                              <span className="text-2xl bg-gradient-to-r from-yellow-200 to-orange-300 bg-clip-text text-transparent">
+                                转盘旋转中
+                              </span>
+                              <span className="animate-spin" style={{ animationDirection: 'reverse' }}>🎲</span>
+                            </div>
+                            <div className="flex justify-center gap-1">
+                              <span className="animate-bounce inline-block w-2 h-2 bg-yellow-400 rounded-full" style={{ animationDelay: '0ms' }}></span>
+                              <span className="animate-bounce inline-block w-2 h-2 bg-orange-400 rounded-full" style={{ animationDelay: '150ms' }}></span>
+                              <span className="animate-bounce inline-block w-2 h-2 bg-red-400 rounded-full" style={{ animationDelay: '300ms' }}></span>
+                            </div>
+                          </div>
                         ) : result ? (
-                          result
+                          <div className="space-y-2">
+                            <div className="text-5xl">🎯</div>
+                            <div className="text-2xl text-emerald-300 font-black">{result}</div>
+                          </div>
                         ) : (
-                          '准备开始'
+                          <div className="space-y-3">
+                            <div className="text-6xl">🍀</div>
+                            <div className="text-xl text-gray-300">准备开始</div>
+                          </div>
                         )}
                       </div>
-                      <p className="text-sm text-gray-300">
-                        {isSpinning ? '命运之轮正在转动...' : result ? '就决定是它了！' : '点击按钮开始抽奖'}
+                      <p className="text-sm text-gray-300 font-medium">
+                        {isSpinning ? '🌟 命运之轮正在转动...' : result ? '🎊 就决定是它了！' : '💫 点击下方按钮开始抽奖'}
                       </p>
                     </div>
                   )}
@@ -651,19 +684,22 @@ export default function FoodWheelPage() {
               <button
                 onClick={handleSpin}
                 disabled={isSpinning}
-                className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 p-[2px] shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-[0_0_30px_rgba(249,115,22,0.5)] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                className="group relative w-full overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 p-[3px] shadow-2xl transition-all duration-300 hover:scale-110 hover:shadow-[0_0_40px_rgba(249,115,22,0.8)] disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:animate-pulse"
               >
-                <div className="relative rounded-lg bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 px-8 py-3 transition-all duration-300 group-hover:from-orange-500 group-hover:via-red-500 group-hover:to-pink-500">
-                  <div className="flex items-center justify-center gap-2 text-lg font-bold text-white">
+                <div className="absolute inset-0 bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-xl"></div>
+                <div className="relative rounded-2xl bg-gradient-to-r from-orange-600 via-red-600 to-pink-600 px-10 py-4 transition-all duration-300 group-hover:from-orange-500 group-hover:via-red-500 group-hover:to-pink-500">
+                  <div className="flex items-center justify-center gap-3 text-xl font-black text-white">
                     {isSpinning ? (
                       <>
-                        <span className="animate-spin">⚡</span>
-                        <span>转动中...</span>
+                        <span className="animate-spin text-3xl">⚡</span>
+                        <span className="tracking-wider">转动中...</span>
+                        <span className="animate-spin text-3xl" style={{ animationDirection: 'reverse' }}>⚡</span>
                       </>
                     ) : (
                       <>
-                        <span className="text-xl">🎲</span>
-                        <span>{result ? '再转一次' : '开始转动'}</span>
+                        <span className="text-2xl group-hover:scale-125 transition-transform duration-300">🎲</span>
+                        <span className="tracking-wider">{result ? '再来一次' : '开始抽奖'}</span>
+                        <span className="text-2xl group-hover:scale-125 transition-transform duration-300">🎲</span>
                       </>
                     )}
                   </div>
@@ -671,21 +707,37 @@ export default function FoodWheelPage() {
               </button>
 
               {/* 美食列表 */}
-              <div className="w-full rounded-xl border-2 border-orange-500/30 bg-gradient-to-br from-orange-900/20 to-red-900/20 backdrop-blur-xl p-4 shadow-lg">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-orange-300 mb-3 flex items-center gap-1">
-                  <span>🍽️</span>
-                  <span>美食候选</span>
-                </h2>
-                <ul className="grid grid-cols-2 gap-2">
-                  {FOOD_OPTIONS.map(option => (
+              <div className="w-full rounded-2xl border-2 border-orange-500/50 bg-gradient-to-br from-orange-900/30 to-red-900/30 backdrop-blur-xl p-5 shadow-2xl">
+                <div className="flex items-center justify-center gap-2 mb-4">
+                  <span className="text-xl">🍽️</span>
+                  <h2 className="text-sm font-bold uppercase tracking-widest text-orange-200">
+                    美食候选
+                  </h2>
+                  <span className="text-xl">🍽️</span>
+                </div>
+                <ul className="grid grid-cols-2 gap-3">
+                  {FOOD_OPTIONS.map((option, index) => (
                     <li
                       key={option.id}
-                      className="group relative overflow-hidden rounded-lg bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-sm px-2 py-2 transition-all duration-300 hover:scale-105 hover:from-white/20 hover:to-white/10 border border-white/10"
+                      className="group relative overflow-hidden rounded-xl bg-gradient-to-br from-white/15 to-white/5 backdrop-blur-sm px-3 py-3 transition-all duration-300 hover:scale-110 hover:from-white/25 hover:to-white/15 border-2 border-white/20 hover:border-orange-400/60 shadow-lg hover:shadow-orange-500/30"
+                      style={{ animationDelay: `${index * 50}ms` }}
                     >
-                      <div className="flex items-center gap-2">
-                        <span className="text-xl">{option.emoji}</span>
-                        <span className="text-xs font-medium text-white truncate">{option.name}</span>
+                      {/* 悬停时的发光效果 */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-orange-400/0 via-orange-400/20 to-orange-400/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                      <div className="relative flex items-center gap-2">
+                        <span className="text-2xl group-hover:scale-125 transition-transform duration-300 drop-shadow-lg">
+                          {option.emoji}
+                        </span>
+                        <span className="text-sm font-bold text-white truncate group-hover:text-orange-200 transition-colors duration-300">
+                          {option.name}
+                        </span>
                       </div>
+
+                      {/* 高亮中奖项 */}
+                      {selectedOption?.id === option.id && showConfetti && (
+                        <div className="absolute inset-0 border-2 border-yellow-400 rounded-xl animate-pulse bg-yellow-400/20"></div>
+                      )}
                     </li>
                   ))}
                 </ul>
