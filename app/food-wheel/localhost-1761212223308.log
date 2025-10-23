@@ -1,0 +1,18 @@
+17:36:44.685 page.tsx:72 🎲 Selected option: 十街 at index: 5
+17:36:44.685 useWheelAnimation.ts:83 🚀 Starting spin animation immediately...
+17:36:44.692 useWheelAnimation.ts:116 ⚡ Animation loop starting now!
+17:36:44.695 useWeightedSpin.ts:69 🎲 权重抽奖信息
+17:36:44.695 useWeightedSpin.ts:70 当前时间: 17:36:44
+17:36:44.696 useWeightedSpin.ts:74 🍜 西部马华: 权重=1.00, 概率=8.85%
+17:36:44.696 useWeightedSpin.ts:74 🍱 地下美食: 权重=1.00, 概率=8.85%
+17:36:44.696 useWeightedSpin.ts:74 🍲 煲仔饭: 权重=1.00, 概率=8.85%
+17:36:44.696 useWeightedSpin.ts:74 🥘 晋来顺: 权重=1.00, 概率=8.85%
+17:36:44.696 useWeightedSpin.ts:74 🍝 陕一哥: 权重=1.00, 概率=8.85%
+17:36:44.696 useWeightedSpin.ts:74 🍛 十街: 权重=2.00, 概率=17.70%
+17:36:44.696 useWeightedSpin.ts:74 🍣 品渡: 权重=2.00, 概率=17.70%
+17:36:44.696 useWeightedSpin.ts:74 🥗 冒菜: 权重=2.00, 概率=17.70%
+17:36:44.696 useWeightedSpin.ts:74 🍽️ 食堂: 权重=0.30, 概率=2.65%
+17:36:56.620 useWheelAnimation.ts:167 ⚡ Animation 90% - result ready, final index: 5
+17:36:56.621 page.tsx:29 🎉 Result ready, winning index: 5
+17:36:57.937 useWheelAnimation.ts:183 ✅ Animation 100% complete - stopping wheel immediately
+17:36:57.937 page.tsx:45 ✅ Animation fully complete - wheel stopped
