@@ -24,8 +24,8 @@ export default function FoodWheelPage() {
   const [selectedOption, setSelectedOption] = useState<FoodOption | null>(null)
   const [winningIndex, setWinningIndex] = useState<number>(-1)
   const [glowIntensity, setGlowIntensity] = useState(1)
-  const animationFrameRef = useRef<number>()
-  const glowAnimationRef = useRef<number>()
+  const animationFrameRef = useRef<number | undefined>(undefined)
+  const glowAnimationRef = useRef<number | undefined>(undefined)
   const startTimeRef = useRef<number>(0)
   const durationRef = useRef<number>(0)
 
