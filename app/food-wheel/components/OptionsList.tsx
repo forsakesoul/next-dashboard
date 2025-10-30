@@ -46,14 +46,14 @@ function OptionsList({ options, selectedOption, showConfetti }: OptionsListProps
 
       <div className="relative z-10">
         {/* 列表头部 */}
-        <div className="flex items-center justify-between mb-4 pb-2 border-b border-indigo-500/30">
+        <div className="flex items-center justify-between mb-4 pb-2 border-b border-pink-400/50">
           <div className="flex items-center gap-2">
-            <span className="text-xl drop-shadow-[0_0_8px_rgba(99,102,241,0.8)]">🍽️</span>
-            <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400 tracking-wider uppercase">
+            <span className="text-xl drop-shadow-[0_0_12px_rgba(236,72,153,1)]">🍽️</span>
+            <h3 className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-pink-400 via-rose-400 to-orange-400 tracking-wider uppercase">
               Options
             </h3>
           </div>
-          <span className="text-xs font-bold text-indigo-300 bg-indigo-500/20 px-2 py-1 rounded-full">
+          <span className="text-xs font-bold text-white bg-gradient-to-r from-pink-500 to-rose-500 px-2 py-1 rounded-full shadow-lg shadow-pink-500/50">
             {options.length}
           </span>
         </div>
@@ -84,17 +84,17 @@ function OptionsList({ options, selectedOption, showConfetti }: OptionsListProps
                   style={{
                     background: isSelected
                       ? 'linear-gradient(135deg, #FFD93D 0%, #6BCB77 100%)'
-                      : 'rgba(255, 255, 255, 0.05)',
+                      : 'linear-gradient(135deg, rgba(236, 72, 153, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)',
                     backdropFilter: 'blur(10px)',
-                    border: isSelected ? '3px solid #FFD93D' : '1px solid rgba(255, 255, 255, 0.1)',
+                    border: isSelected ? '3px solid #FFD93D' : '2px solid rgba(236, 72, 153, 0.4)',
                     boxShadow: isSelected
                       ? '0 0 40px rgba(255, 217, 61, 0.8), 0 10px 30px rgba(0, 0, 0, 0.3)'
-                      : '0 4px 20px rgba(0, 0, 0, 0.1)',
+                      : '0 4px 20px rgba(236, 72, 153, 0.3), 0 0 15px rgba(168, 85, 247, 0.2)',
                   }}
                 >
                   {/* 悬停发光效果 */}
                   {!isSelected && (
-                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-500/0 via-cyan-500/20 to-cyan-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-pink-500/0 via-pink-500/40 to-purple-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                   )}
 
                   {/* 内容 */}
@@ -112,9 +112,13 @@ function OptionsList({ options, selectedOption, showConfetti }: OptionsListProps
                       {option.emoji}
                     </span>
                     <span
-                      className={`text-sm font-bold text-center truncate w-full ${
-                        isSelected ? 'text-gray-900' : 'text-white'
-                      }`}
+                      className="text-sm font-bold text-center truncate w-full"
+                      style={{
+                        color: '#ffffff',
+                        textShadow: isSelected
+                          ? '0 2px 10px rgba(0, 0, 0, 0.8)'
+                          : '0 2px 8px rgba(236, 72, 153, 0.6)',
+                      }}
                     >
                       {option.name}
                     </span>

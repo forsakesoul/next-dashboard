@@ -126,7 +126,6 @@ export default function NFTFoodWheelPage() {
               showConfetti={showConfetti}
               options={options}
               onSpin={handleSpin}
-              onResetWeights={() => console.log('Reset weights not implemented')}
             />
           </div>
         </div>

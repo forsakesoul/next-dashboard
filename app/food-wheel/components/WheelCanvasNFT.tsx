@@ -45,7 +45,7 @@ function WheelCanvasNFT({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const bgCanvasRef = useRef<HTMLCanvasElement>(null)
   const particleOrbitRef = useRef<ParticleOrbit | null>(null)
-  const animationFrameRef = useRef<number>()
+  const animationFrameRef = useRef<number>(0)
   const scanlineOffsetRef = useRef<number>(0)
 
   const SEGMENT_ANGLE = (2 * Math.PI) / options.length
