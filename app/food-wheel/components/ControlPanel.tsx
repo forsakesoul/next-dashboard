@@ -38,7 +38,7 @@ function ControlPanel({
   onSpin,
 }: ControlPanelProps) {
   return (
-    <div className="flex flex-col gap-4 w-full lg:w-[380px] flex-shrink-0">
+    <div className="flex flex-col gap-3 sm:gap-4 w-full max-w-md lg:max-w-[380px] lg:w-[380px] flex-shrink-0 mx-auto lg:mx-0">
       {/* 结果显示卡片 */}
       <ResultCard
         selectedOption={selectedOption}

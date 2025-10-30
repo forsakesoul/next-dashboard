@@ -4,7 +4,7 @@
 
 'use client'
 
-import { useEffect, useRef, memo } from 'react'
+import { useEffect, useRef, memo, useState, useCallback } from 'react'
 import { FoodOption } from '../types/food-wheel.types'
 import {
   drawSegment,
@@ -14,6 +14,7 @@ import {
   drawCenterButton,
   drawMarker,
 } from '../utils/canvas-helpers'
+import { useDeviceInfo, useResponsiveSizes, triggerHapticFeedback } from '../hooks/useResponsive'
 
 interface WheelCanvasProps {
   /** 美食选项列表 */
@@ -43,6 +44,15 @@ function WheelCanvas({
   onCenterClick,
 }: WheelCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  // 响应式设备检测
+  const deviceInfo = useDeviceInfo()
+  const responsiveSizes = useResponsiveSizes(deviceInfo)
+
+  // 触摸手势状态
+  const touchTimerRef = useRef<NodeJS.Timeout | undefined>(undefined)
+  const lastTapRef = useRef<number>(0)
+  const [isPressing, setIsPressing] = useState(false)
 
   // 计算每个扇形的角度
   const SEGMENT_ANGLE = (2 * Math.PI) / options.length
@@ -129,40 +139,121 @@ function WheelCanvas({
   }, [rotation, isSpinning, winningIndex, glowIntensity, options, SEGMENT_ANGLE])
 
   /**
-   * 处理 Canvas 点击事件
-   * 检测是否点击了中心按钮
+   * 检测是否点击中心按钮
    */
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current
-    if (!canvas || isSpinning) return
+  const isClickInCenter = useCallback(
+    (clientX: number, clientY: number): boolean => {
+      const canvas = canvasRef.current
+      if (!canvas) return false
 
-    // 获取点击坐标
-    const rect = canvas.getBoundingClientRect()
-    const scaleX = canvas.width / rect.width
-    const scaleY = canvas.height / rect.height
-    const x = (e.clientX - rect.left) * scaleX
-    const y = (e.clientY - rect.top) * scaleY
+      const rect = canvas.getBoundingClientRect()
+      const scaleX = canvas.width / rect.width
+      const scaleY = canvas.height / rect.height
+      const x = (clientX - rect.left) * scaleX
+      const y = (clientY - rect.top) * scaleY
 
-    // 计算点击点到中心的距离
-    const centerX = canvas.width / 2
-    const centerY = canvas.height / 2
-    const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2))
+      const centerX = canvas.width / 2
+      const centerY = canvas.height / 2
+      const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2))
 
-    // 如果点击在中心圆内（半径50）
-    if (distance <= 50) {
-      onCenterClick()
+      return distance <= 50
+    },
+    []
+  )
+
+  /**
+   * 处理 Canvas 点击事件
+   */
+  const handleCanvasClick = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      if (isSpinning) return
+
+      if (isClickInCenter(e.clientX, e.clientY)) {
+        triggerHapticFeedback('medium')
+        onCenterClick()
+      }
+    },
+    [isSpinning, isClickInCenter, onCenterClick]
+  )
+
+  /**
+   * 处理触摸开始 (长按支持)
+   */
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent<HTMLCanvasElement>) => {
+      if (isSpinning) return
+
+      const touch = e.touches[0]
+      if (!touch) return
+
+      setIsPressing(true)
+
+      // 检测双击
+      const now = Date.now()
+      const timeSinceLastTap = now - lastTapRef.current
+      lastTapRef.current = now
+
+      if (timeSinceLastTap < 300 && isClickInCenter(touch.clientX, touch.clientY)) {
+        // 双击快速开始
+        triggerHapticFeedback('heavy')
+        onCenterClick()
+        return
+      }
+
+      // 长按开始 (500ms)
+      if (isClickInCenter(touch.clientX, touch.clientY)) {
+        touchTimerRef.current = setTimeout(() => {
+          if (!isSpinning) {
+            triggerHapticFeedback('medium')
+            onCenterClick()
+          }
+        }, 500)
+      }
+    },
+    [isSpinning, isClickInCenter, onCenterClick]
+  )
+
+  /**
+   * 处理触摸结束
+   */
+  const handleTouchEnd = useCallback(() => {
+    setIsPressing(false)
+    if (touchTimerRef.current) {
+      clearTimeout(touchTimerRef.current)
     }
-  }
+  }, [])
+
+  /**
+   * 清理定时器
+   */
+  useEffect(() => {
+    return () => {
+      if (touchTimerRef.current) {
+        clearTimeout(touchTimerRef.current)
+      }
+    }
+  }, [])
 
   return (
     <div className="relative flex items-center justify-center flex-shrink-0">
-      <div className="relative w-[350px] h-[350px] max-w-[80vw] max-h-[80vw]">
+      <div
+        className="relative transition-all duration-300"
+        style={{
+          width: `${responsiveSizes.wheelSize}px`,
+          height: `${responsiveSizes.wheelSize}px`,
+        }}
+      >
         <canvas
           ref={canvasRef}
-          width={500}
-          height={500}
-          className="relative z-10 drop-shadow-2xl cursor-pointer"
+          width={responsiveSizes.canvasSize}
+          height={responsiveSizes.canvasSize}
+          className={`relative z-10 drop-shadow-2xl cursor-pointer touch-none transition-transform ${
+            isPressing ? 'scale-95' : 'scale-100'
+          }`}
           onClick={handleCanvasClick}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchEnd}
         />
       </div>
     </div>

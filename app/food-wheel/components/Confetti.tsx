@@ -1,5 +1,6 @@
 /**
  * 粒子烟花庆祝动画组件
+ * 支持性能降级
  */
 
 'use client'
@@ -11,6 +12,26 @@ interface ConfettiProps {
   show: boolean
   /** 持续时间（毫秒） */
   duration?: number
+}
+
+/**
+ * 检测设备性能等级
+ */
+function getPerformanceLevel(): 'high' | 'medium' | 'low' {
+  if (typeof window === 'undefined') return 'high'
+
+  const cores = navigator.hardwareConcurrency || 4
+  const memory = (navigator as any).deviceMemory || 4
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent)
+
+  // 低端设备: 移动端 + 低内存或低核心数
+  if (isMobile && (cores <= 4 || memory < 4)) return 'low'
+
+  // 中端设备: 移动端或桌面低配
+  if (isMobile || cores <= 4) return 'medium'
+
+  // 高端设备
+  return 'high'
 }
 
 interface Particle {
@@ -58,6 +79,16 @@ export default function Confetti({ show, duration = 3000 }: ConfettiProps) {
     updateSize()
     window.addEventListener('resize', updateSize)
 
+    // 性能等级
+    const performanceLevel = getPerformanceLevel()
+
+    // 根据性能调整粒子数量
+    const particleMultiplier = {
+      high: 1.0, // 50个粒子
+      medium: 0.6, // 30个粒子
+      low: 0.4, // 20个粒子
+    }[performanceLevel]
+
     // 烟花颜色
     const colors = [
       '#FF6B6B',
@@ -74,7 +105,8 @@ export default function Confetti({ show, duration = 3000 }: ConfettiProps) {
      * 创建烟花爆炸
      */
     const createFirework = (x: number, y: number) => {
-      const particleCount = 50 // 每次爆炸50个粒子
+      const baseParticleCount = 50
+      const particleCount = Math.floor(baseParticleCount * particleMultiplier) // 根据性能调整
       const color = colors[Math.floor(Math.random() * colors.length)]
 
       for (let i = 0; i < particleCount; i++) {
@@ -142,8 +174,13 @@ export default function Confetti({ show, duration = 3000 }: ConfettiProps) {
           ctx.save()
           ctx.globalAlpha = particle.life
           ctx.fillStyle = particle.color
-          ctx.shadowBlur = 10
-          ctx.shadowColor = particle.color
+
+          // 低端设备禁用阴影效果
+          if (performanceLevel !== 'low') {
+            ctx.shadowBlur = 10
+            ctx.shadowColor = particle.color
+          }
+
           ctx.beginPath()
           ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2)
           ctx.fill()
