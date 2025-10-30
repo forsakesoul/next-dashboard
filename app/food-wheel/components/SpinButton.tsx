@@ -31,38 +31,49 @@ function SpinButton({ isSpinning, hasResult, onSpin }: SpinButtonProps) {
     <button
       onClick={handleClick}
       disabled={isSpinning}
-      className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 p-[2px] shadow-xl shadow-purple-500/50 hover:shadow-2xl hover:shadow-purple-500/70 transform hover:scale-105 active:scale-[0.98] transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+      className="group relative w-full overflow-hidden rounded-3xl transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed disabled:transform-none"
     >
-      {/* 动态光晕效果 */}
-      <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 opacity-0 group-hover:opacity-20 blur-xl transition-opacity duration-300"></div>
+      {/* 超强外发光 */}
+      <div className="absolute -inset-1 bg-gradient-to-r from-pink-600 via-purple-600 to-cyan-600 rounded-3xl blur-xl opacity-75 group-hover:opacity-100 animate-pulse"></div>
 
-      <div className="relative bg-gradient-to-br from-slate-900 to-slate-800 rounded-lg px-6 py-4">
-        <div className="flex items-center justify-center gap-3 text-lg font-black">
+      {/* 次级发光 */}
+      <div className="absolute -inset-0.5 bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-500 rounded-3xl blur-lg opacity-60"></div>
+
+      {/* 主按钮 - 超级渐变 */}
+      <div className="relative bg-gradient-to-r from-pink-500 via-purple-600 to-cyan-500 rounded-3xl px-8 sm:px-10 py-5 sm:py-6 shadow-2xl">
+        {/* 顶部高光 */}
+        <div className="absolute inset-0 bg-gradient-to-b from-white/30 via-white/10 to-transparent rounded-3xl"></div>
+
+        {/* 动态光线扫描 */}
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000 rounded-3xl"></div>
+
+        <div className="relative flex items-center justify-center gap-3 text-xl sm:text-2xl font-black text-white">
           {isSpinning ? (
-            // 旋转中状态
+            // 旋转中状态 - 超炫
             <>
-              <span className="animate-spin text-cyan-400 text-2xl drop-shadow-[0_0_8px_rgba(0,255,255,0.8)]">
+              <span className="animate-spin text-3xl sm:text-4xl filter drop-shadow-[0_0_20px_rgba(255,255,255,1)]">
                 ⚡
               </span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-400 tracking-wider">
-                ROLLING
+              <span className="tracking-widest font-black drop-shadow-[0_0_15px_rgba(255,255,255,0.8)] animate-pulse">
+                转盘旋转中
               </span>
               <span
-                className="animate-spin text-pink-400 text-2xl drop-shadow-[0_0_8px_rgba(236,72,153,0.8)]"
-                style={{ animationDirection: 'reverse' }}
+                className="animate-spin text-3xl sm:text-4xl filter drop-shadow-[0_0_20px_rgba(255,255,255,1)]"
+                style={{ animationDirection: 'reverse', animationDuration: '0.8s' }}
               >
                 ⚡
               </span>
             </>
           ) : (
-            // 静止状态
+            // 静止状态 - 超炫
             <>
-              <span className="text-2xl group-hover:scale-125 transition-transform duration-300 filter drop-shadow-[0_0_8px_rgba(139,92,246,0.8)]">
-                🎲
+              <span className="text-3xl sm:text-4xl group-hover:scale-125 group-hover:rotate-12 transition-all duration-300 filter drop-shadow-[0_0_20px_rgba(255,255,255,1)]">
+                🎯
               </span>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-purple-300 to-pink-300 tracking-wider">
-                {hasResult ? 'SPIN AGAIN' : 'START GAME'}
+              <span className="tracking-widest font-black drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]">
+                {hasResult ? '再转一次' : '开始抽奖'}
               </span>
+              <span className="text-2xl group-hover:scale-125 transition-transform duration-300">✨</span>
             </>
           )}
         </div>
