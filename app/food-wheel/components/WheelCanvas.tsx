@@ -155,13 +155,72 @@ function WheelCanvas({
   }
 
   return (
-    <div className="relative flex items-center justify-center flex-shrink-0">
-      <div className="relative w-[350px] h-[350px] max-w-[80vw] max-h-[80vw]">
+    <div
+      className="relative flex items-center justify-center flex-shrink-0"
+      style={{ perspective: '1200px' }}
+    >
+      {/* 三层脉冲光晕背景 */}
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div
+          className="absolute w-[420px] h-[420px] sm:w-[520px] sm:h-[520px] lg:w-[620px] lg:h-[620px] max-w-[95vw] max-h-[95vw] rounded-full animate-pulse"
+          style={{
+            background: 'radial-gradient(circle, rgba(236,72,153,0.3) 0%, transparent 70%)',
+            animation: 'pulse 3s ease-in-out infinite',
+          }}
+        />
+        <div
+          className="absolute w-[390px] h-[390px] sm:w-[490px] sm:h-[490px] lg:w-[590px] lg:h-[590px] max-w-[90vw] max-h-[90vw] rounded-full animate-pulse"
+          style={{
+            background: 'radial-gradient(circle, rgba(168,85,247,0.3) 0%, transparent 70%)',
+            animation: 'pulse 3s ease-in-out infinite 0.5s',
+          }}
+        />
+        <div
+          className="absolute w-[360px] h-[360px] sm:w-[460px] sm:h-[460px] lg:w-[560px] lg:h-[560px] max-w-[85vw] max-h-[85vw] rounded-full animate-pulse"
+          style={{
+            background: 'radial-gradient(circle, rgba(6,182,212,0.3) 0%, transparent 70%)',
+            animation: 'pulse 3s ease-in-out infinite 1s',
+          }}
+        />
+      </div>
+
+      {/* 玻璃态转盘容器 */}
+      <div
+        className="relative w-[350px] h-[350px] sm:w-[450px] sm:h-[450px] lg:w-[550px] lg:h-[550px] max-w-[90vw] max-h-[90vw] rounded-full"
+        style={{
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+          transform: isSpinning
+            ? 'rotateX(0deg) scale(1)'
+            : 'rotateX(15deg) scale(1)',
+          transformStyle: 'preserve-3d',
+          transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        }}
+        onMouseEnter={(e) => {
+          if (!isSpinning) {
+            e.currentTarget.style.transform = 'rotateX(20deg) rotateY(5deg) scale(1.05)'
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isSpinning) {
+            e.currentTarget.style.transform = 'rotateX(15deg) scale(1)'
+          }
+        }}
+      >
         <canvas
           ref={canvasRef}
           width={500}
           height={500}
-          className="relative z-10 drop-shadow-2xl cursor-pointer"
+          className="relative z-10 cursor-pointer"
+          style={{
+            width: '100%',
+            height: '100%',
+            filter: isSpinning ? 'brightness(1.2) saturate(1.3)' : 'brightness(1)',
+            transition: 'filter 0.3s ease',
+          }}
           onClick={handleCanvasClick}
         />
       </div>

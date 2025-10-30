@@ -1,11 +1,12 @@
 /**
- * 结果显示卡片组件
+ * 结果显示卡片组件 - 3D 翻转增强版
  */
 
 'use client'
 
-import { memo } from 'react'
+import { memo, useState, useEffect } from 'react'
 import { FoodOption } from '../types/food-wheel.types'
+import { GlassMaterial } from '../config/design-config'
 
 interface ResultCardProps {
   /** 选中的选项 */
@@ -19,45 +20,64 @@ interface ResultCardProps {
 }
 
 /**
- * 结果显示卡片 - 科技风格
+ * 结果显示卡片 - 3D 翻转 + 玻璃态质感
  */
 function ResultCard({ selectedOption, isSpinning, showConfetti, result }: ResultCardProps) {
+  const [isFlipped, setIsFlipped] = useState(false)
+
+  // 当中奖时触发翻转动画
+  useEffect(() => {
+    if (selectedOption && showConfetti) {
+      setIsFlipped(true)
+    } else {
+      setIsFlipped(false)
+    }
+  }, [selectedOption, showConfetti])
+
   return (
-    <div className="relative bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 backdrop-blur-xl rounded-2xl shadow-2xl border border-cyan-500/30 p-6 overflow-hidden">
-      {/* 科技感背景网格 */}
-      <div className="absolute inset-0 opacity-10">
+    <div
+      className="relative rounded-2xl"
+      style={{
+        perspective: '1000px',
+        minHeight: '240px',
+      }}
+    >
+      {/* 3D 翻转容器 */}
+      <div
+        className="relative w-full h-full transition-transform duration-800 ease-out"
+        style={{
+          transformStyle: 'preserve-3d',
+          transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+        }}
+      >
+        {/* 正面 - 等待/旋转状态 */}
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 rounded-2xl overflow-hidden"
           style={{
-            backgroundImage:
-              'linear-gradient(cyan 1px, transparent 1px), linear-gradient(90deg, cyan 1px, transparent 1px)',
-            backgroundSize: '20px 20px',
+            backfaceVisibility: 'hidden',
+            WebkitBackdropFilter: GlassMaterial.card.WebkitBackdropFilter,
+            backdropFilter: GlassMaterial.card.backdropFilter,
+            background: 'linear-gradient(135deg, rgba(102,126,234,0.3) 0%, rgba(118,75,162,0.3) 100%)',
+            border: GlassMaterial.card.border,
+            boxShadow: GlassMaterial.card.boxShadow,
           }}
-        ></div>
-      </div>
-
-      {/* 顶部霓虹装饰线 */}
-      <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent"></div>
-
-      <div className="relative z-10 text-center">
-        {selectedOption && showConfetti ? (
-          // 中奖状态
-          <div className="space-y-4">
-            <div className="text-7xl animate-bounce drop-shadow-[0_0_20px_rgba(0,255,255,0.5)]">
-              {selectedOption.emoji}
-            </div>
-            <div>
-              <h3 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 mb-3 drop-shadow-lg">
-                {selectedOption.name}
-              </h3>
-              <div className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full text-white font-bold text-sm shadow-lg shadow-green-500/50 animate-pulse">
-                <span className="text-base">✓</span>
-                <span>WINNER!</span>
-              </div>
-            </div>
+        >
+          {/* 背景网格 */}
+          <div className="absolute inset-0 opacity-10">
+            <div
+              className="absolute inset-0"
+              style={{
+                backgroundImage:
+                  'linear-gradient(cyan 1px, transparent 1px), linear-gradient(90deg, cyan 1px, transparent 1px)',
+                backgroundSize: '20px 20px',
+              }}
+            ></div>
           </div>
-        ) : (
-          <div className="min-h-[200px] flex flex-col items-center justify-center space-y-4">
+
+          {/* 顶部霓虹装饰线 */}
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-cyan-400 to-transparent"></div>
+
+          <div className="relative z-10 p-6 min-h-[240px] flex flex-col items-center justify-center">
             {isSpinning ? (
               // 旋转中状态 - 添加立即出现的动画
               <div className="animate-fadeIn">
@@ -113,11 +133,94 @@ function ResultCard({ selectedOption, isSpinning, showConfetti, result }: Result
               </>
             )}
           </div>
-        )}
+
+          {/* 底部霓虹装饰线 */}
+          <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400 to-transparent"></div>
+        </div>
+
+        {/* 背面 - 中奖状态 */}
+        <div
+          className="absolute inset-0 rounded-2xl overflow-hidden"
+          style={{
+            backfaceVisibility: 'hidden',
+            WebkitBackdropFilter: GlassMaterial.card.WebkitBackdropFilter,
+            backdropFilter: GlassMaterial.card.backdropFilter,
+            background:
+              'linear-gradient(135deg, rgba(240,147,251,0.4) 0%, rgba(245,87,108,0.4) 100%)',
+            border: '2px solid rgba(245, 87, 108, 0.8)',
+            boxShadow: '0 8px 32px 0 rgba(240, 147, 251, 0.5)',
+            transform: 'rotateY(180deg)',
+          }}
+        >
+          {/* 庆祝背景动画 */}
+          <div className="absolute inset-0">
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/20 via-pink-500/20 to-purple-500/20 animate-pulse"></div>
+          </div>
+
+          <div className="relative z-10 p-6 min-h-[240px] flex flex-col items-center justify-center space-y-4">
+            {/* 徽章图标 */}
+            <div
+              className="text-7xl animate-[bounce-in_0.6s_cubic-bezier(0.68,-0.55,0.265,1.55)]"
+              style={{
+                filter: 'drop-shadow(0 0 20px rgba(234, 179, 8, 0.8))',
+              }}
+            >
+              🎉
+            </div>
+
+            {/* 美食名称 */}
+            {selectedOption && (
+              <div className="space-y-2">
+                <div className="text-6xl mb-2">{selectedOption.emoji}</div>
+                <h3
+                  className="text-3xl font-black text-white"
+                  style={{
+                    textShadow: '0 0 20px rgba(255, 255, 255, 0.8)',
+                    animation: 'scale-in 0.4s ease-out 0.2s backwards',
+                  }}
+                >
+                  {selectedOption.name}
+                </h3>
+                <p className="text-base text-white/90 font-medium">今天就吃这个！</p>
+
+                {/* WINNER 徽章 */}
+                <div className="inline-flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-green-400 to-emerald-400 rounded-full text-white font-bold text-sm shadow-lg shadow-green-500/50 mt-3">
+                  <span className="text-base">✓</span>
+                  <span>WINNER!</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* 底部霓虹装饰线 */}
-      <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-400 to-transparent"></div>
+      {/* CSS 动画定义 */}
+      <style jsx>{`
+        @keyframes bounce-in {
+          0% {
+            transform: scale(0) rotate(-180deg);
+            opacity: 0;
+          }
+          60% {
+            transform: scale(1.2) rotate(10deg);
+            opacity: 1;
+          }
+          100% {
+            transform: scale(1) rotate(0deg);
+          }
+        }
+
+        @keyframes scale-in {
+          from {
+            transform: scale(0.8);
+            opacity: 0;
+          }
+          to {
+            transform: scale(1);
+            opacity: 1;
+          }
+        }
+      `}</style>
     </div>
   )
 }

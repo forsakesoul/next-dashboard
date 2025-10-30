@@ -1,10 +1,23 @@
 /**
- * 粒子烟花庆祝动画组件
+ * 粒子烟花庆祝动画组件 - 增强版
+ * 集成：五彩纸屑 + 星星爆炸 + 光波扩散
  */
 
 'use client'
 
 import { useEffect, useRef } from 'react'
+import {
+  createStarExplosion,
+  updateStarParticle,
+  renderStarParticle,
+  type StarParticle,
+} from '../particles/star-explosion'
+import {
+  createShockwave,
+  updateShockwaveRing,
+  renderShockwaveRing,
+  type ShockwaveRing,
+} from '../particles/shockwave'
 
 interface ConfettiProps {
   /** 是否显示 */
@@ -25,18 +38,23 @@ interface Particle {
 }
 
 /**
- * 粒子烟花效果
+ * 粒子烟花效果 - 增强版
  */
 export default function Confetti({ show, duration = 3000 }: ConfettiProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const particlesRef = useRef<Particle[]>([])
+  const starParticlesRef = useRef<StarParticle[]>([])
+  const shockwaveRingsRef = useRef<ShockwaveRing[]>([])
   const animationFrameRef = useRef<number | undefined>(undefined)
   const startTimeRef = useRef<number>(0)
+  const lastTimeRef = useRef<number>(0)
 
   useEffect(() => {
     if (!show) {
-      // 清空粒子
+      // 清空所有粒子
       particlesRef.current = []
+      starParticlesRef.current = []
+      shockwaveRingsRef.current = []
       if (animationFrameRef.current !== undefined) {
         cancelAnimationFrame(animationFrameRef.current)
         animationFrameRef.current = undefined
@@ -96,18 +114,23 @@ export default function Confetti({ show, duration = 3000 }: ConfettiProps) {
     }
 
     /**
-     * 更新和绘制粒子
+     * 更新和绘制粒子 - 增强版
      */
     const animate = (timestamp: number) => {
       if (!startTimeRef.current) {
         startTimeRef.current = timestamp
+        lastTimeRef.current = timestamp
       }
 
       const elapsed = timestamp - startTimeRef.current
+      const deltaTime = timestamp - lastTimeRef.current
+      lastTimeRef.current = timestamp
 
       // 超过持续时间则停止
       if (elapsed > duration) {
         particlesRef.current = []
+        starParticlesRef.current = []
+        shockwaveRingsRef.current = []
         if (animationFrameRef.current) {
           cancelAnimationFrame(animationFrameRef.current)
           animationFrameRef.current = undefined
@@ -125,7 +148,16 @@ export default function Confetti({ show, duration = 3000 }: ConfettiProps) {
         createFirework(x, y)
       }
 
-      // 更新和绘制所有粒子
+      // === 1. 绘制光波扩散（最底层）===
+      shockwaveRingsRef.current = shockwaveRingsRef.current.filter((ring) => {
+        const isAlive = updateShockwaveRing(ring, deltaTime)
+        if (isAlive) {
+          renderShockwaveRing(ctx, ring)
+        }
+        return isAlive
+      })
+
+      // === 2. 绘制五彩纸屑 ===
       particlesRef.current = particlesRef.current.filter((particle) => {
         // 更新位置
         particle.x += particle.vx
@@ -155,15 +187,34 @@ export default function Confetti({ show, duration = 3000 }: ConfettiProps) {
         return false
       })
 
+      // === 3. 绘制星星爆炸（最上层）===
+      starParticlesRef.current = starParticlesRef.current.filter((star) => {
+        const isAlive = updateStarParticle(star, deltaTime)
+        if (isAlive) {
+          renderStarParticle(ctx, star)
+        }
+        return isAlive
+      })
+
       animationFrameRef.current = requestAnimationFrame(animate)
     }
 
-    // 初始爆炸
+    // === 初始效果序列 ===
     const centerX = canvas.width / 2
     const centerY = canvas.height / 2
+
+    // 1. 光波扩散（立即触发）
+    shockwaveRingsRef.current = createShockwave(centerX, centerY)
+
+    // 2. 五彩纸屑（立即触发）
     createFirework(centerX, centerY - 100)
 
-    // 延迟创建更多烟花
+    // 3. 星星爆炸（延迟200ms）
+    setTimeout(() => {
+      starParticlesRef.current = createStarExplosion(centerX, centerY - 100)
+    }, 200)
+
+    // 4. 额外烟花（延迟200ms和400ms）
     setTimeout(() => {
       createFirework(centerX - 150, centerY - 50)
     }, 200)
@@ -174,6 +225,7 @@ export default function Confetti({ show, duration = 3000 }: ConfettiProps) {
 
     // 启动动画
     startTimeRef.current = 0
+    lastTimeRef.current = 0
     animationFrameRef.current = requestAnimationFrame(animate)
 
     return () => {

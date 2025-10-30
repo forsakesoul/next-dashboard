@@ -1,8 +1,9 @@
 /**
- * 转盘旋转动画 Hook
+ * 转盘旋转动画 Hook - 三阶段增强版
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react'
+import { SpinAnimationPhases } from '../config/animation-phases'
 
 interface UseWheelAnimationOptions {
   /** 扇形数量，用于计算每个扇形的角度 */
@@ -94,15 +95,18 @@ export function useWheelAnimation({
       // 计算目标角度
       const targetAngle = targetIndex * SEGMENT_ANGLE
 
-      // 额外旋转圈数：8-12 圈（随机）- 有足够的仪式感
-      const extraSpins = (Math.floor(Math.random() * 5) + 8) * Math.PI * 2
-
-      // 动画持续时间：5-8 秒（随机）- 足够长但不会太久
-      const duration = 5000 + Math.floor(Math.random() * 3000)
+      // 使用三阶段动画系统计算总旋转量
+      const totalPhaseRotation =
+        SpinAnimationPhases.phases[0].rotation + // 加速阶段 1圈
+        SpinAnimationPhases.phases[1].rotation + // 匀速阶段 5圈
+        SpinAnimationPhases.phases[2].rotation // 减速阶段 2圈
 
       // 设置目标旋转角度（累加，不是重置）
-      const newTargetRotation = currentRotation + extraSpins + targetAngle
+      const newTargetRotation = currentRotation + totalPhaseRotation + targetAngle
       setTargetRotation(newTargetRotation)
+
+      // 使用三阶段总时长（4.8秒）
+      const duration = SpinAnimationPhases.getTotalDuration()
 
       // 设置动画参数
       durationRef.current = duration
@@ -154,12 +158,17 @@ export function useWheelAnimation({
       const elapsed = timestamp - startTimeRef.current
       const progress = Math.min(elapsed / durationRef.current, 1)
 
-      // 缓动函数（Ease-Out Quart）- 更强的减速效果，让转盘慢慢停下来
-      const easeOut = 1 - Math.pow(1 - progress, 4)
-      const currentAngle = startRotation + (endRotation - startRotation) * easeOut
+      // 使用三阶段动画系统计算当前角度
+      const currentAngle = SpinAnimationPhases.calculateRotation(elapsed, startRotation, endRotation)
 
       // 更新当前角度（这会触发重新渲染，Canvas组件会读取这个值）
       setCurrentRotation(currentAngle)
+
+      // 可选：调试信息
+      // const phaseInfo = SpinAnimationPhases.getPhaseInfo(elapsed)
+      // if (phaseInfo) {
+      //   console.log(`Phase: ${phaseInfo.phaseName}, Progress: ${(phaseInfo.phaseProgress * 100).toFixed(1)}%`)
+      // }
 
       if (progress < 1) {
         // 继续动画直到100%
