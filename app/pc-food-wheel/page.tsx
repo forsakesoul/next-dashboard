@@ -16,6 +16,7 @@ import WheelCanvasPC from './components/WheelCanvasPC'
 import PCResultModal from './components/PCResultModal'
 import PCStatsPanel from './components/PCStatsPanel'
 import { saveSpinRecord } from './utils/storage'
+import { inter, spaceGrotesk, fontSize, fontWeight } from './config/fonts'
 
 export default function PCFoodWheelPage() {
   const options = foodOptionsConfig.options
@@ -75,7 +76,7 @@ export default function PCFoodWheelPage() {
   }, [animation.isSpinning, handleSpin])
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className={`min-h-screen relative overflow-hidden ${inter.variable} ${spaceGrotesk.variable}`}>
       {/* 动态渐变背景 */}
       <div
         className="fixed inset-0 z-0"
@@ -222,27 +223,35 @@ export default function PCFoodWheelPage() {
 
           {/* 右侧：控制面板 - 扩展宽度以平衡布局 */}
           <aside className="flex-1 space-y-6 max-w-[600px]">
-            {/* 结果卡片 */}
+            {/* 结果卡片 - 优化版 */}
             <div
-              className="rounded-2xl p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.02]"
+              className="rounded-2xl p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.02] group"
               style={{
                 background: PCTheme.surface.glass.background,
-                backdropFilter: PCTheme.surface.glass.backdropFilter,
+                backdropFilter: 'blur(20px) saturate(180%)', // 优化：30px → 20px
                 border: PCTheme.surface.glass.border,
                 boxShadow: PCTheme.shadows.lg,
               }}
             >
-              {/* 装饰性渐变 */}
+              {/* 装饰性渐变 - 优化：动态定位 */}
               <div
-                className="absolute top-0 right-0 w-32 h-32 rounded-full blur-3xl opacity-30"
+                className="absolute right-0 w-32 h-32 rounded-full blur-3xl opacity-30 transition-all duration-500"
                 style={{
-                  background: 'linear-gradient(135deg, #667eea 0%, #f093fb 100%)',
+                  top: weightedSpin.result ? '-40px' : '0', // 中奖时上移，避免遮挡
+                  background: 'linear-gradient(135deg, #667eea 0%, #f093fb 50%, #00f2fe 100%)', // 3色渐变
                 }}
               />
 
               <h3
-                className="text-sm font-bold mb-4 relative z-10 flex items-center gap-2"
-                style={{ color: PCTheme.text.secondary }}
+                className="relative z-10 flex items-center gap-2 mb-4 transition-all duration-300 group-hover:translate-x-1"
+                style={{
+                  fontFamily: 'var(--font-inter)',
+                  fontSize: fontSize.subheading, // 18px
+                  fontWeight: fontWeight.bold, // 700
+                  color: '#FFD700', // 金色
+                  letterSpacing: '-0.01em',
+                  textShadow: '0 2px 10px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 215, 0, 0.4)',
+                }}
               >
                 <span className="text-xl">🎁</span>
                 <span>抽奖结果</span>
@@ -257,10 +266,20 @@ export default function PCFoodWheelPage() {
                     {weightedSpin.selectedOption?.emoji}
                   </div>
                   <h2
-                    className="text-4xl font-black bg-clip-text text-transparent"
+                    className="bg-clip-text text-transparent"
                     style={{
-                      backgroundImage: 'linear-gradient(135deg, #667eea 0%, #f093fb 100%)',
-                      textShadow: '0 4px 20px rgba(102, 126, 234, 0.3)',
+                      fontFamily: 'var(--font-space-grotesk)',
+                      fontSize: fontSize.display, // 48px (从36px提升)
+                      fontWeight: fontWeight.bold, // 700
+                      backgroundImage: 'linear-gradient(135deg, #667eea 0%, #f093fb 50%, #00f2fe 100%)', // 3色渐变
+                      textShadow: `
+                        0 0 30px rgba(102, 126, 234, 0.6),
+                        0 0 60px rgba(240, 147, 251, 0.4),
+                        0 0 80px rgba(0, 242, 254, 0.3),
+                        0 2px 20px rgba(0, 0, 0, 0.3)
+                      `, // 4层发光
+                      letterSpacing: '-0.02em',
+                      lineHeight: '1.2',
                     }}
                   >
                     {weightedSpin.result}
@@ -274,19 +293,28 @@ export default function PCFoodWheelPage() {
                   >
                     🎲
                   </div>
-                  <p style={{ color: PCTheme.text.muted }}>
+                  <p
+                    style={{
+                      fontFamily: 'var(--font-inter)',
+                      fontSize: fontSize.body, // 16px
+                      fontWeight: fontWeight.semibold, // 600
+                      color: '#00D4FF', // 青蓝色
+                      letterSpacing: '0.01em',
+                      textShadow: '0 2px 10px rgba(0, 212, 255, 0.6), 0 0 20px rgba(0, 212, 255, 0.4)',
+                    }}
+                  >
                     等待抽奖...
                   </p>
                 </div>
               )}
             </div>
 
-            {/* 操作按钮 */}
+            {/* 操作按钮 - 优化版 */}
             <div
               className="rounded-2xl p-6 relative overflow-hidden"
               style={{
                 background: PCTheme.surface.glass.background,
-                backdropFilter: PCTheme.surface.glass.backdropFilter,
+                backdropFilter: 'blur(20px) saturate(180%)', // 优化：30px → 20px
                 border: PCTheme.surface.glass.border,
                 boxShadow: PCTheme.shadows.lg,
               }}
@@ -294,25 +322,31 @@ export default function PCFoodWheelPage() {
               <button
                 onClick={handleSpin}
                 disabled={animation.isSpinning}
-                className="w-full h-16 rounded-xl text-lg font-black transition-all duration-300 relative overflow-hidden group"
+                className="w-full h-16 rounded-xl transition-all duration-300 relative overflow-hidden group"
                 style={{
                   background: animation.isSpinning
-                    ? 'linear-gradient(135deg, #64748b 0%, #475569 100%)'
-                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    ? 'linear-gradient(135deg, rgba(100, 116, 139, 0.8) 0%, rgba(71, 85, 105, 0.8) 100%)' // 半透明保持品牌色
+                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)', // 3色渐变
                   color: '#ffffff',
                   cursor: animation.isSpinning ? 'not-allowed' : 'pointer',
                   boxShadow: animation.isSpinning
                     ? 'none'
                     : PCTheme.shadows.glow.blue,
                   border: '2px solid rgba(255, 255, 255, 0.2)',
+                  fontFamily: 'var(--font-space-grotesk)',
+                  fontSize: fontSize.body, // 16px
+                  fontWeight: fontWeight.bold, // 700
+                  letterSpacing: '0.02em',
                 }}
                 onMouseEnter={(e) => {
                   if (!animation.isSpinning) {
                     e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)'
+                    e.currentTarget.style.textShadow = '0 0 20px rgba(255, 255, 255, 0.8)' // 悬停文字发光
                   }
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0) scale(1)'
+                  e.currentTarget.style.textShadow = 'none'
                 }}
               >
                 {/* 按钮发光效果 */}
@@ -334,45 +368,64 @@ export default function PCFoodWheelPage() {
 
               <div className="flex items-center justify-center gap-2 mt-4">
                 <kbd
-                  className="px-3 py-1.5 rounded-lg text-xs font-mono"
+                  className="px-3 py-1.5 rounded-lg font-mono transition-all duration-200 hover:scale-105"
                   style={{
                     background: PCTheme.surface.card,
                     border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: PCTheme.text.secondary,
+                    fontSize: fontSize.caption, // 14px
+                    fontWeight: fontWeight.medium, // 500
+                    color: 'rgba(255, 255, 255, 0.9)', // 优化对比度：5.0:1
                   }}
                 >
                   Space
                 </kbd>
                 <span
-                  className="text-sm"
-                  style={{ color: PCTheme.text.muted }}
+                  style={{
+                    fontFamily: 'var(--font-inter)',
+                    fontSize: fontSize.caption, // 14px
+                    fontWeight: fontWeight.medium, // 500
+                    color: '#FF6B9D', // 粉红色
+                    letterSpacing: '0.01em',
+                    textShadow: '0 1px 8px rgba(255, 107, 157, 0.5), 0 0 15px rgba(255, 107, 157, 0.3)',
+                  }}
                 >
                   快捷键启动
                 </span>
               </div>
             </div>
 
-            {/* 美食列表 */}
+            {/* 美食列表 - 优化版 */}
             <div
-              className="rounded-2xl p-6 relative overflow-hidden"
+              className="rounded-2xl p-6 relative overflow-hidden group"
               style={{
                 background: PCTheme.surface.glass.background,
-                backdropFilter: PCTheme.surface.glass.backdropFilter,
+                backdropFilter: 'blur(20px) saturate(180%)', // 优化：30px → 20px
                 border: PCTheme.surface.glass.border,
                 boxShadow: PCTheme.shadows.lg,
               }}
             >
               <h3
-                className="text-sm font-bold mb-4 flex items-center gap-2"
-                style={{ color: PCTheme.text.secondary }}
+                className="flex items-center gap-2 mb-4 transition-all duration-300 group-hover:translate-x-1"
+                style={{
+                  fontFamily: 'var(--font-inter)',
+                  fontSize: fontSize.subheading, // 18px (从14px提升)
+                  fontWeight: fontWeight.bold, // 700 提升字重
+                  color: '#00D4FF', // 青蓝色，高对比度
+                  letterSpacing: '-0.01em',
+                  textShadow: '0 2px 10px rgba(0, 212, 255, 0.6), 0 0 20px rgba(0, 212, 255, 0.4)', // 发光效果
+                }}
               >
                 <span className="text-xl">🍽️</span>
                 <span>美食选项</span>
                 <span
-                  className="ml-auto px-2 py-0.5 rounded-full text-xs"
+                  className="ml-auto px-2 py-0.5 rounded-full transition-all duration-200 hover:scale-110"
                   style={{
-                    background: 'rgba(102, 126, 234, 0.2)',
-                    color: PCTheme.accent.primary,
+                    background: 'rgba(102, 126, 234, 0.35)', // 进一步提升可见度
+                    fontSize: fontSize.micro, // 12px
+                    fontWeight: fontWeight.bold, // 700 提升字重
+                    color: '#A0B4FF', // 更亮的蓝色
+                    border: '1px solid rgba(160, 180, 255, 0.5)',
+                    textShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
                   }}
                 >
                   {options.length}
@@ -385,16 +438,16 @@ export default function PCFoodWheelPage() {
                   return (
                     <div
                       key={option.id}
-                      className="rounded-xl p-3 transition-all duration-300 hover:scale-105"
+                      className="rounded-xl p-3 transition-all duration-300 hover:scale-105 relative"
                       style={{
                         background: isSelected
-                          ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+                          ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #ff8a00 100%)' // 3色渐变
                           : 'rgba(255, 255, 255, 0.05)',
                         border: isSelected
                           ? `2px solid #f093fb`
                           : '1px solid rgba(255, 255, 255, 0.1)',
                         boxShadow: isSelected
-                          ? PCTheme.shadows.glow.amber
+                          ? `${PCTheme.shadows.glow.amber}, 0 0 20px rgba(240, 147, 251, 0.4)` // 多重发光
                           : PCTheme.shadows.sm,
                         transform: isSelected ? 'scale(1.05)' : 'scale(1)',
                       }}
@@ -403,28 +456,52 @@ export default function PCFoodWheelPage() {
                         <span
                           className="text-3xl transition-transform duration-300"
                           style={{
-                            filter: isSelected ? 'drop-shadow(0 0 10px rgba(255, 255, 255, 0.5))' : 'none',
+                            filter: isSelected
+                              ? 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.7)) drop-shadow(0 0 30px rgba(240, 147, 251, 0.5))'
+                              : 'none',
                           }}
                         >
                           {option.emoji}
                         </span>
                         <span
-                          className="text-sm font-bold text-center"
+                          className="text-center"
                           style={{
+                            fontFamily: 'var(--font-inter)',
+                            fontSize: fontSize.caption, // 14px
+                            fontWeight: isSelected ? fontWeight.bold : fontWeight.semibold, // 700 / 600
                             color: isSelected
-                              ? '#ffffff'
-                              : PCTheme.text.secondary,
-                            textShadow: isSelected ? '0 2px 10px rgba(0, 0, 0, 0.3)' : 'none',
+                              ? '#FFD700' // 金色，高对比度
+                              : '#00D4FF', // 青蓝色，高对比度
+                            textShadow: isSelected
+                              ? '0 2px 10px rgba(255, 215, 0, 0.6), 0 0 20px rgba(255, 215, 0, 0.4)' // 金色发光
+                              : '0 1px 8px rgba(0, 212, 255, 0.5), 0 0 15px rgba(0, 212, 255, 0.3)', // 青蓝色发光
+                            letterSpacing: '0.01em',
                           }}
                         >
                           {option.name}
                         </span>
                       </div>
 
-                      {/* 中奖标记 */}
+                      {/* 中奖标记 - 优化版：多重标识 */}
                       {isSelected && (
-                        <div className="absolute top-1 right-1 w-5 h-5 bg-white rounded-full flex items-center justify-center animate-bounce">
-                          <span className="text-xs">✓</span>
+                        <div
+                          className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center animate-bounce"
+                          style={{
+                            background: 'linear-gradient(135deg, #fff 0%, #f0f0f0 100%)',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3), 0 0 15px rgba(240, 147, 251, 0.6)',
+                            border: '2px solid rgba(240, 147, 251, 0.8)',
+                            animation: 'bounce 1s ease-in-out infinite, pulse 2s ease-in-out infinite',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: fontSize.micro, // 12px
+                              fontWeight: fontWeight.bold, // 700
+                              color: '#f093fb',
+                            }}
+                          >
+                            ✓
+                          </span>
                         </div>
                       )}
                     </div>

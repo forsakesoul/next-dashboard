@@ -37,6 +37,8 @@ export default function WheelCanvasPC({
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const animationFrameRef = useRef<number>(0)
+  const lastRotationRef = useRef(rotation)
+  const lastGlowRef = useRef(glowIntensity)
 
   // 画布尺寸
   const SIZE = PCTheme.wheel.size.largeDesktop
@@ -138,7 +140,7 @@ export default function WheelCanvasPC({
   }
 
   /**
-   * 动画循环
+   * 动画循环 - 优化版：仅在必要时渲染
    */
   useEffect(() => {
     const canvas = canvasRef.current
@@ -147,19 +149,48 @@ export default function WheelCanvasPC({
     const ctx = canvas.getContext('2d')
     if (!ctx) return
 
-    const animate = () => {
-      drawWheel(ctx)
-      animationFrameRef.current = requestAnimationFrame(animate)
+    // 检查是否需要渲染
+    const needsRender = () => {
+      // 1. 正在旋转时必须渲染
+      if (isSpinning) return true
+
+      // 2. rotation或glowIntensity变化时需要渲染
+      if (rotation !== lastRotationRef.current) return true
+      if (glowIntensity !== lastGlowRef.current) return true
+
+      // 3. 静止状态不需要渲染
+      return false
     }
 
-    animate()
+    const animate = () => {
+      if (needsRender()) {
+        drawWheel(ctx)
+        lastRotationRef.current = rotation
+        lastGlowRef.current = glowIntensity
+      }
+
+      // 仅在旋转时持续请求动画帧
+      if (isSpinning) {
+        animationFrameRef.current = requestAnimationFrame(animate)
+      }
+    }
+
+    // 立即绘制一次
+    drawWheel(ctx)
+    lastRotationRef.current = rotation
+    lastGlowRef.current = glowIntensity
+
+    // 如果正在旋转，启动动画循环
+    if (isSpinning) {
+      animationFrameRef.current = requestAnimationFrame(animate)
+    }
 
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current)
       }
     }
-  }, [drawWheel])
+  }, [drawWheel, rotation, isSpinning, glowIntensity])
 
   return (
     <div ref={containerRef} className="relative">

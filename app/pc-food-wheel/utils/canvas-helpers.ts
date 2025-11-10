@@ -1,28 +1,39 @@
 /**
  * PC版 Canvas 绘制辅助函数
  * 基于 food-wheel 的 Dribbble 风格增强版
+ * 性能优化：减少对象创建，降低GC压力
  */
 
 import { FoodOption } from '../../food-wheel/types/food-wheel.types'
 import { WheelSegmentEnhancement } from '../../food-wheel/config/design-config'
 
+// ========== 性能优化：缓存常量 ==========
+const BASE_RADIUS = 230
+const HEX_CACHE = new Map<string, { r: number; g: number; b: number }>()
+
 /**
  * 计算Canvas缩放比例（基于500px为基准）
  */
 function getScale(radius: number): number {
-  // 假设原设计基于 radius = 230 (500px canvas - 20px margin)
-  const baseRadius = 230
-  return radius / baseRadius
+  return radius / BASE_RADIUS
 }
 
 /**
- * 辅助函数: 十六进制颜色转 RGBA
+ * 辅助函数: 十六进制颜色转 RGBA（优化版，带缓存）
  */
 function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+  let rgb = HEX_CACHE.get(hex)
+
+  if (!rgb) {
+    rgb = {
+      r: parseInt(hex.slice(1, 3), 16),
+      g: parseInt(hex.slice(3, 5), 16),
+      b: parseInt(hex.slice(5, 7), 16)
+    }
+    HEX_CACHE.set(hex, rgb)
+  }
+
+  return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${alpha})`
 }
 
 /**
@@ -60,17 +71,17 @@ export function drawSegment(
   ctx.fillStyle = gradient
   ctx.fill()
 
-  // 绘制发光边框
+  // 绘制发光边框（优化：降低shadowBlur）
   ctx.strokeStyle = config.border.color
   ctx.lineWidth = config.border.width
   ctx.shadowColor = config.border.shadowColor
-  ctx.shadowBlur = config.border.shadowBlur
+  ctx.shadowBlur = Math.min(config.border.shadowBlur, 8) // 限制最大模糊度
   ctx.stroke()
 
-  // 绘制内部发光线（可选装饰）
+  // 绘制内部发光线（优化：减少线条数量和模糊度）
   if (config.innerGlow.enabled) {
     ctx.shadowBlur = 0
-    const glowLines = config.innerGlow.lineCount
+    const glowLines = Math.min(config.innerGlow.lineCount, 4) // 8条→4条
     const lineLength = config.innerGlow.length
 
     for (let i = 0; i < glowLines; i++) {
@@ -83,7 +94,7 @@ export function drawSegment(
       ctx.strokeStyle = config.innerGlow.color
       ctx.lineWidth = config.innerGlow.lineWidth
       ctx.shadowColor = config.innerGlow.color
-      ctx.shadowBlur = config.innerGlow.blur
+      ctx.shadowBlur = Math.min(config.innerGlow.blur, 6) // 10→6
       ctx.stroke()
     }
   }
@@ -109,7 +120,7 @@ export function drawWinningHighlight(
 
   const glow = glowIntensity
 
-  // 1. 绘制外层超级发光边框（三层：红/黄/白）
+  // 1. 绘制外层超级发光边框（优化：降低模糊度40→15）
   for (let i = 3; i >= 1; i--) {
     ctx.beginPath()
     ctx.moveTo(0, 0)
@@ -118,7 +129,7 @@ export function drawWinningHighlight(
     ctx.strokeStyle = i === 3 ? '#FF0000' : i === 2 ? '#FFFF00' : '#FFFFFF'
     ctx.lineWidth = 10
     ctx.shadowColor = i === 3 ? '#FF0000' : i === 2 ? '#FFFF00' : '#FFFFFF'
-    ctx.shadowBlur = 40 * glow
+    ctx.shadowBlur = 15 * glow // 40→15
     ctx.globalAlpha = 0.8 * glow
     ctx.stroke()
   }
@@ -134,20 +145,21 @@ export function drawWinningHighlight(
   ctx.fillStyle = `rgba(255, 255, 255, ${0.4 + 0.3 * glow})`
   ctx.fill()
 
-  // 3. 内部发光线条（从中心放射）
-  for (let i = 0; i < 8; i++) {
-    const lineAngle = startAngle + (segmentAngle * (i + 0.5)) / 8
+  // 3. 内部发光线条（优化：8条→4条，模糊度15→8）
+  const lineCount = 4 // 8→4
+  for (let i = 0; i < lineCount; i++) {
+    const lineAngle = startAngle + (segmentAngle * (i + 0.5)) / lineCount
     ctx.beginPath()
     ctx.moveTo(radius * 0.2 * Math.cos(lineAngle), radius * 0.2 * Math.sin(lineAngle))
     ctx.lineTo(Math.cos(lineAngle) * radius, Math.sin(lineAngle) * radius)
     ctx.strokeStyle = `rgba(255, 255, 255, ${0.7 * glow})`
     ctx.lineWidth = 4
     ctx.shadowColor = '#FFFF00'
-    ctx.shadowBlur = 15 * glow
+    ctx.shadowBlur = 8 * glow // 15→8
     ctx.stroke()
   }
 
-  // 4. 超粗白色边框
+  // 4. 超粗白色边框（优化：模糊度20→12）
   ctx.shadowBlur = 0
   ctx.beginPath()
   ctx.moveTo(0, 0)
@@ -156,7 +168,7 @@ export function drawWinningHighlight(
   ctx.strokeStyle = '#FFFFFF'
   ctx.lineWidth = 12
   ctx.shadowColor = '#FFFFFF'
-  ctx.shadowBlur = 20
+  ctx.shadowBlur = 12 // 20→12
   ctx.stroke()
 
   ctx.restore()
@@ -232,11 +244,11 @@ export function drawWheelBorder(
   const scale = getScale(radius)
   ctx.save()
 
-  // 绘制三层脉冲光晕（从外到内）
+  // 绘制三层脉冲光晕（优化：降低模糊度）
   const glowRings = [
-    { radius: radius + 25 * scale, color: 'rgba(236, 72, 153, 0.4)', blur: 40 * scale, width: 3 * scale },
-    { radius: radius + 18 * scale, color: 'rgba(168, 85, 247, 0.5)', blur: 30 * scale, width: 3 * scale },
-    { radius: radius + 12 * scale, color: 'rgba(6, 182, 212, 0.6)', blur: 20 * scale, width: 3 * scale },
+    { radius: radius + 25 * scale, color: 'rgba(236, 72, 153, 0.4)', blur: 15 * scale, width: 3 * scale }, // 40→15
+    { radius: radius + 18 * scale, color: 'rgba(168, 85, 247, 0.5)', blur: 12 * scale, width: 3 * scale }, // 30→12
+    { radius: radius + 12 * scale, color: 'rgba(6, 182, 212, 0.6)', blur: 10 * scale, width: 3 * scale }, // 20→10
   ]
 
   glowRings.forEach((ring) => {
@@ -258,7 +270,7 @@ export function drawWheelBorder(
   ctx.lineWidth = 16 * scale
   ctx.stroke()
 
-  // 绘制内圈渐变金边
+  // 绘制内圈渐变金边（优化：降低模糊度20→10）
   const gradient = ctx.createLinearGradient(
     centerX - radius,
     centerY - radius,
@@ -274,7 +286,7 @@ export function drawWheelBorder(
   ctx.strokeStyle = gradient
   ctx.lineWidth = 6 * scale
   ctx.shadowColor = 'rgba(255, 215, 0, 0.8)'
-  ctx.shadowBlur = 20 * scale
+  ctx.shadowBlur = 10 * scale // 20→10
   ctx.stroke()
 
   ctx.restore()
@@ -295,12 +307,12 @@ export function drawCenterButton(
 
   ctx.save()
 
-  // 外层多色光晕（三层）
+  // 外层多色光晕（优化：降低模糊度）
   if (!isSpinning) {
     const outerGlows = [
-      { radius: centerRadius + 15 * scale, color: 'rgba(236, 72, 153, 0.6)', blur: 30 * scale },
-      { radius: centerRadius + 10 * scale, color: 'rgba(168, 85, 247, 0.7)', blur: 20 * scale },
-      { radius: centerRadius + 5 * scale, color: 'rgba(6, 182, 212, 0.8)', blur: 15 * scale },
+      { radius: centerRadius + 15 * scale, color: 'rgba(236, 72, 153, 0.6)', blur: 12 * scale }, // 30→12
+      { radius: centerRadius + 10 * scale, color: 'rgba(168, 85, 247, 0.7)', blur: 10 * scale }, // 20→10
+      { radius: centerRadius + 5 * scale, color: 'rgba(6, 182, 212, 0.8)', blur: 8 * scale }, // 15→8
     ]
 
     outerGlows.forEach((glow) => {
@@ -372,12 +384,12 @@ export function drawMarker(ctx: CanvasRenderingContext2D, centerX: number, cente
   // 在转盘顶部画一个标记线
   const markerY = centerY - radius - 5 * scale
 
-  // 绘制发光的标记线
+  // 绘制发光的标记线（优化：20→10）
   ctx.strokeStyle = '#FFD700'
   ctx.lineWidth = 8 * scale
   ctx.lineCap = 'round'
   ctx.shadowColor = '#FFD700'
-  ctx.shadowBlur = 20 * scale
+  ctx.shadowBlur = 10 * scale // 20→10
 
   ctx.beginPath()
   ctx.moveTo(centerX - 30 * scale, markerY)
@@ -393,9 +405,9 @@ export function drawMarker(ctx: CanvasRenderingContext2D, centerX: number, cente
   ctx.lineTo(centerX + 30 * scale, markerY)
   ctx.stroke()
 
-  // 绘制中心圆点
+  // 绘制中心圆点（优化：15→8）
   ctx.shadowColor = '#FF0000'
-  ctx.shadowBlur = 15 * scale
+  ctx.shadowBlur = 8 * scale // 15→8
   ctx.fillStyle = '#FF0000'
   ctx.beginPath()
   ctx.arc(centerX, markerY, 6 * scale, 0, Math.PI * 2)

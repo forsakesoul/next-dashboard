@@ -1,18 +1,37 @@
 /**
  * 美食转盘主页面
  * 基于加权随机算法的抽奖系统
+ * 性能优化：动态导入非关键组件
  */
 
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, Suspense, lazy } from 'react'
+import dynamic from 'next/dynamic'
 import foodOptionsConfig from './food-options.json'
-import WheelCanvas from './components/WheelCanvas'
-import ControlPanel from './components/ControlPanel'
-import Confetti from './components/Confetti'
 import { useWheelAnimation } from './hooks/useWheelAnimation'
 import { useWeightedSpin } from './hooks/useWeightedSpin'
 import { useGlowEffect } from './hooks/useGlowEffect'
+
+// 动态导入组件（懒加载）
+const WheelCanvas = dynamic(() => import('./components/WheelCanvas'), {
+  loading: () => (
+    <div className="w-[350px] h-[350px] sm:w-[450px] sm:h-[450px] flex items-center justify-center">
+      <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-yellow-400"></div>
+    </div>
+  ),
+  ssr: false // Canvas 不需要 SSR
+})
+
+const ControlPanel = dynamic(() => import('./components/ControlPanel'), {
+  loading: () => (
+    <div className="w-full lg:w-80 h-96 bg-white/5 backdrop-blur-md rounded-2xl animate-pulse"></div>
+  )
+})
+
+const Confetti = dynamic(() => import('./components/Confetti'), {
+  ssr: false // 粒子效果不需要 SSR
+})
 
 export default function FoodWheelPage() {
   // 从配置文件加载美食选项
@@ -147,8 +166,8 @@ export default function FoodWheelPage() {
       `}</style>
 
       <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-        {/* 动态背景 */}
-        <div className="absolute inset-0 opacity-20 pointer-events-none">
+        {/* 动态背景 - 懒加载 */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ willChange: 'auto' }}>
           <div className="absolute top-0 left-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-orange-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
           <div
             className="absolute top-1/3 right-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"
@@ -161,7 +180,7 @@ export default function FoodWheelPage() {
         </div>
 
         <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center gap-6 sm:gap-8 lg:gap-10 px-4 py-6 sm:py-8 min-h-screen">
-          {/* 标题 */}
+          {/* 标题 - 关键内容优先渲染 */}
           <header className="text-center flex flex-col items-center gap-2 sm:gap-3 float-animation w-full">
             <div className="relative">
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 neon-text px-4">
@@ -174,31 +193,41 @@ export default function FoodWheelPage() {
             </p>
           </header>
 
-          {/* 主要内容 */}
+          {/* 主要内容 - Suspense包裹 */}
           <div className="flex flex-col lg:flex-row w-full gap-6 sm:gap-8 items-center lg:items-start justify-center flex-1">
             {/* 转盘区域 */}
-            <div className="w-full flex justify-center lg:flex-1 lg:max-w-lg">
-              <WheelCanvas
-                options={options}
-                rotation={animation.currentRotation}
-                isSpinning={animation.isSpinning}
-                winningIndex={animation.winningIndex}
-                glowIntensity={glowIntensity}
-                onCenterClick={handleSpin}
-              />
-            </div>
+            <Suspense fallback={
+              <div className="w-[350px] h-[350px] sm:w-[450px] sm:h-[450px] flex items-center justify-center">
+                <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-yellow-400"></div>
+              </div>
+            }>
+              <div className="w-full flex justify-center lg:flex-1 lg:max-w-lg">
+                <WheelCanvas
+                  options={options}
+                  rotation={animation.currentRotation}
+                  isSpinning={animation.isSpinning}
+                  winningIndex={animation.winningIndex}
+                  glowIntensity={glowIntensity}
+                  onCenterClick={handleSpin}
+                />
+              </div>
+            </Suspense>
 
             {/* 控制面板 */}
-            <div className="w-full lg:w-auto lg:flex-shrink-0">
-              <ControlPanel
-                options={options}
-                selectedOption={weightedSpin.selectedOption}
-                isSpinning={animation.isSpinning}
-                showConfetti={showConfetti}
-                result={weightedSpin.result}
-                onSpin={handleSpin}
-              />
-            </div>
+            <Suspense fallback={
+              <div className="w-full lg:w-80 h-96 bg-white/5 backdrop-blur-md rounded-2xl animate-pulse"></div>
+            }>
+              <div className="w-full lg:w-auto lg:flex-shrink-0">
+                <ControlPanel
+                  options={options}
+                  selectedOption={weightedSpin.selectedOption}
+                  isSpinning={animation.isSpinning}
+                  showConfetti={showConfetti}
+                  result={weightedSpin.result}
+                  onSpin={handleSpin}
+                />
+              </div>
+            </Suspense>
           </div>
         </div>
       </main>
