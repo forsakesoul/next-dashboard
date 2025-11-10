@@ -1,6 +1,6 @@
 /**
  * PC端转盘Canvas组件
- * 扁平化专业设计风格
+ * Dribbble 风格增强版 - 三层渐变 + 多层光晕
  */
 
 'use client'
@@ -8,6 +8,14 @@
 import { useRef, useEffect, useCallback } from 'react'
 import { FoodOption } from '../../food-wheel/types/food-wheel.types'
 import { PCTheme } from '../../food-wheel/config/pc-theme'
+import {
+  drawSegment,
+  drawWinningHighlight,
+  drawOptionText,
+  drawWheelBorder,
+  drawCenterButton,
+  drawMarker,
+} from '../utils/canvas-helpers'
 
 interface WheelCanvasPCProps {
   options: FoodOption[]
@@ -41,18 +49,7 @@ export default function WheelCanvasPC({
   const SEGMENT_ANGLE = (2 * Math.PI) / options.length
 
   /**
-   * 调整颜色亮度
-   */
-  const adjustColorBrightness = (hex: string, amount: number): string => {
-    const num = parseInt(hex.replace('#', ''), 16)
-    const r = Math.max(0, Math.min(255, ((num >> 16) & 0xff) + amount))
-    const g = Math.max(0, Math.min(255, ((num >> 8) & 0xff) + amount))
-    const b = Math.max(0, Math.min(255, (num & 0xff) + amount))
-    return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`
-  }
-
-  /**
-   * 绘制转盘
+   * 绘制转盘 - 使用增强版样式
    */
   const drawWheel = useCallback(
     (ctx: CanvasRenderingContext2D) => {
@@ -70,233 +67,51 @@ export default function WheelCanvasPC({
       ctx.fill()
       ctx.restore()
 
-      // 绘制扇形
+      // 绘制扇形（使用增强版函数）
       options.forEach((option, index) => {
         const startAngle = rotation + index * SEGMENT_ANGLE
         const endAngle = startAngle + SEGMENT_ANGLE
-        const middleAngle = startAngle + SEGMENT_ANGLE / 2
 
-        // 绘制扇形填充
-        ctx.beginPath()
-        ctx.moveTo(CENTER_X, CENTER_Y)
-        ctx.arc(CENTER_X, CENTER_Y, RADIUS, startAngle, endAngle)
-        ctx.closePath()
-
-        // 径向渐变填充
-        const gradient = ctx.createRadialGradient(
-          CENTER_X,
-          CENTER_Y,
-          0,
-          CENTER_X,
-          CENTER_Y,
-          RADIUS
-        )
-        gradient.addColorStop(0, option.color)
-        gradient.addColorStop(0.6, option.color)
-        gradient.addColorStop(1, adjustColorBrightness(option.color, -30))
-
-        ctx.fillStyle = gradient
-        ctx.fill()
-
-        // 绘制发光边框
-        ctx.save()
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)'
-        ctx.lineWidth = 2
-        ctx.shadowColor = 'rgba(255, 255, 255, 0.5)'
-        ctx.shadowBlur = 10
-        ctx.stroke()
-        ctx.restore()
-
-        // 绘制文字和Emoji（保持水平）
-        drawSegmentText(ctx, option, index, startAngle)
+        // 使用增强版扇形绘制（三层渐变 + 发光边框 + 内发光线）
+        drawSegment(ctx, option, startAngle, endAngle, RADIUS, CENTER_X, CENTER_Y)
       })
 
-      // 绘制中奖高亮
+      // 绘制三层彩色光晕边框
+      drawWheelBorder(ctx, CENTER_X, CENTER_Y, RADIUS)
+
+      // 绘制中奖高亮（四层叠加效果）
       if (winningIndex !== null && !isSpinning) {
-        drawWinningHighlight(ctx, winningIndex)
+        const startAngle = rotation + winningIndex * SEGMENT_ANGLE
+        const endAngle = startAngle + SEGMENT_ANGLE
+        drawWinningHighlight(
+          ctx,
+          startAngle,
+          endAngle,
+          SEGMENT_ANGLE,
+          RADIUS,
+          CENTER_X,
+          CENTER_Y,
+          glowIntensity
+        )
       }
 
-      // 绘制中心按钮
-      drawCenterButton(ctx, isSpinning)
+      // 绘制文字和Emoji
+      options.forEach((option, index) => {
+        const startAngle = rotation + index * SEGMENT_ANGLE
+        const midAngle = startAngle + SEGMENT_ANGLE / 2
+        const isWinner = winningIndex === index && !isSpinning
+        drawOptionText(ctx, option, midAngle, RADIUS, CENTER_X, CENTER_Y, isWinner)
+      })
 
-      // 绘制顶部指针
-      drawPointer(ctx)
+      // 绘制多层霓虹中心按钮
+      drawCenterButton(ctx, CENTER_X, CENTER_Y, RADIUS, isSpinning)
+
+      // 绘制发光顶部标记
+      drawMarker(ctx, CENTER_X, CENTER_Y, RADIUS)
     },
     [options, rotation, winningIndex, isSpinning, glowIntensity]
   )
 
-  /**
-   * 绘制扇形文字
-   */
-  const drawSegmentText = (
-    ctx: CanvasRenderingContext2D,
-    option: FoodOption,
-    index: number,
-    startAngle: number
-  ) => {
-    const middleAngle = startAngle + SEGMENT_ANGLE / 2
-    const textRadius = RADIUS * 0.7
-
-    // 计算文字位置（保持水平）
-    const x = CENTER_X + Math.cos(middleAngle) * textRadius
-    const y = CENTER_Y + Math.sin(middleAngle) * textRadius
-
-    ctx.save()
-    ctx.translate(x, y)
-
-    // 绘制Emoji (按比例缩小 从60->32)
-    ctx.font = `${32 * 2}px sans-serif`
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'middle'
-    ctx.fillText(option.emoji, 0, -18)
-
-    // 绘制文字 (按比例缩小 从24->14)
-    ctx.font = `bold ${14 * 2}px sans-serif`
-    ctx.fillStyle = '#ffffff'
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'
-    ctx.shadowBlur = 6
-    ctx.fillText(option.name, 0, 18)
-
-    ctx.restore()
-  }
-
-  /**
-   * 绘制中奖高亮
-   */
-  const drawWinningHighlight = (
-    ctx: CanvasRenderingContext2D,
-    index: number
-  ) => {
-    const startAngle = rotation + index * SEGMENT_ANGLE
-    const endAngle = startAngle + SEGMENT_ANGLE
-
-    ctx.save()
-
-    // 绘制高亮扇形
-    ctx.beginPath()
-    ctx.moveTo(CENTER_X, CENTER_Y)
-    ctx.arc(CENTER_X, CENTER_Y, RADIUS, startAngle, endAngle)
-    ctx.closePath()
-
-    // 半透明白色遮罩
-    ctx.fillStyle = `rgba(255, 255, 255, ${0.15 * glowIntensity})`
-    ctx.fill()
-
-    // 金色发光边框
-    ctx.strokeStyle = PCTheme.wheel.winningStrokeColor
-    ctx.lineWidth = PCTheme.wheel.winningStrokeWidth * 2
-    ctx.shadowColor = PCTheme.wheel.winningStrokeColor
-    ctx.shadowBlur = 20
-    ctx.stroke()
-
-    ctx.restore()
-  }
-
-  /**
-   * 绘制中心按钮
-   */
-  const drawCenterButton = (ctx: CanvasRenderingContext2D, spinning: boolean) => {
-    ctx.save()
-
-    // 外圈发光阴影
-    ctx.shadowColor = spinning
-      ? 'rgba(100, 100, 100, 0.3)'
-      : 'rgba(102, 126, 234, 0.8)'
-    ctx.shadowBlur = spinning ? 20 : 60
-    ctx.shadowOffsetX = 0
-    ctx.shadowOffsetY = 0
-
-    // 绘制按钮背景（渐变）
-    ctx.beginPath()
-    ctx.arc(CENTER_X, CENTER_Y, CENTER_BUTTON_RADIUS, 0, 2 * Math.PI)
-
-    if (!spinning) {
-      const buttonGradient = ctx.createLinearGradient(
-        CENTER_X - CENTER_BUTTON_RADIUS,
-        CENTER_Y - CENTER_BUTTON_RADIUS,
-        CENTER_X + CENTER_BUTTON_RADIUS,
-        CENTER_Y + CENTER_BUTTON_RADIUS
-      )
-      buttonGradient.addColorStop(0, '#667eea')
-      buttonGradient.addColorStop(1, '#764ba2')
-      ctx.fillStyle = buttonGradient
-    } else {
-      ctx.fillStyle = '#64748b'
-    }
-
-    ctx.fill()
-
-    // 发光边框
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)'
-    ctx.lineWidth = 6
-    ctx.stroke()
-
-    // 绘制图标 (按比例缩小 从70->40)
-    if (spinning) {
-      // 旋转动画图标
-      ctx.save()
-      ctx.translate(CENTER_X, CENTER_Y)
-      ctx.rotate((Date.now() / 200) % (2 * Math.PI))
-      ctx.font = `bold ${40 * 2}px sans-serif`
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillStyle = '#ffffff'
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)'
-      ctx.shadowBlur = 8
-      ctx.fillText('⟳', 0, 0)
-      ctx.restore()
-    } else {
-      // 播放图标
-      ctx.font = `bold ${40 * 2}px sans-serif`
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillStyle = '#ffffff'
-      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)'
-      ctx.shadowBlur = 8
-      ctx.fillText('▶', CENTER_X + 8, CENTER_Y)
-    }
-
-    ctx.restore()
-  }
-
-  /**
-   * 绘制顶部指针
-   */
-  const drawPointer = (ctx: CanvasRenderingContext2D) => {
-    const pointerSize = PCTheme.wheel.pointerSize * 2
-
-    ctx.save()
-
-    // 指针位置（顶部中央）
-    const x = CENTER_X
-    const y = CENTER_Y - RADIUS - 30
-
-    // 绘制三角形指针
-    ctx.beginPath()
-    ctx.moveTo(x, y)
-    ctx.lineTo(x - pointerSize, y - pointerSize * 1.5)
-    ctx.lineTo(x + pointerSize, y - pointerSize * 1.5)
-    ctx.closePath()
-
-    // 渐变填充
-    const gradient = ctx.createLinearGradient(x, y - pointerSize * 1.5, x, y)
-    gradient.addColorStop(0, '#f093fb')
-    gradient.addColorStop(1, '#f093fb')
-
-    ctx.fillStyle = gradient
-    ctx.shadowColor = 'rgba(240, 147, 251, 0.9)'
-    ctx.shadowBlur = 30
-    ctx.fill()
-
-    // 发光边框
-    ctx.strokeStyle = '#ffffff'
-    ctx.lineWidth = 6
-    ctx.shadowBlur = 15
-    ctx.shadowColor = 'rgba(255, 255, 255, 0.8)'
-    ctx.stroke()
-
-    ctx.restore()
-  }
 
   /**
    * 处理点击事件

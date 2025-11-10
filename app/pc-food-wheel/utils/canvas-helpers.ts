@@ -1,9 +1,10 @@
 /**
- * Canvas 绘制辅助函数 - Dribbble 风格增强版
+ * PC版 Canvas 绘制辅助函数
+ * 基于 food-wheel 的 Dribbble 风格增强版
  */
 
-import { FoodOption } from '../types/food-wheel.types'
-import { WheelSegmentEnhancement } from '../config/design-config'
+import { FoodOption } from '../../food-wheel/types/food-wheel.types'
+import { WheelSegmentEnhancement } from '../../food-wheel/config/design-config'
 
 /**
  * 计算Canvas缩放比例（基于500px为基准）
@@ -15,22 +16,37 @@ function getScale(radius: number): number {
 }
 
 /**
- * 绘制单个扇形 - 增强版（渐变 + 发光边框）
+ * 辅助函数: 十六进制颜色转 RGBA
+ */
+function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`
+}
+
+/**
+ * 绘制单个扇形 - 增强版（三层渐变 + 发光边框 + 内发光线）
  */
 export function drawSegment(
   ctx: CanvasRenderingContext2D,
   option: FoodOption,
   startAngle: number,
   endAngle: number,
-  radius: number
+  radius: number,
+  centerX: number,
+  centerY: number
 ) {
   const config = WheelSegmentEnhancement.segment
   const midAngle = (startAngle + endAngle) / 2
 
+  ctx.save()
+  ctx.translate(centerX, centerY)
+
   // 创建径向渐变（从中心到边缘）
   const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, radius)
 
-  // 解析颜色并应用透明度
+  // 解析颜色并应用透明度（三停靠点）
   const baseColor = option.color
   gradient.addColorStop(0, hexToRgba(baseColor, config.gradient.colorStops[0].opacity))
   gradient.addColorStop(0.7, hexToRgba(baseColor, config.gradient.colorStops[1].opacity))
@@ -45,17 +61,15 @@ export function drawSegment(
   ctx.fill()
 
   // 绘制发光边框
-  ctx.save()
   ctx.strokeStyle = config.border.color
   ctx.lineWidth = config.border.width
   ctx.shadowColor = config.border.shadowColor
   ctx.shadowBlur = config.border.shadowBlur
   ctx.stroke()
-  ctx.restore()
 
   // 绘制内部发光线（可选装饰）
   if (config.innerGlow.enabled) {
-    ctx.save()
+    ctx.shadowBlur = 0
     const glowLines = config.innerGlow.lineCount
     const lineLength = config.innerGlow.length
 
@@ -72,22 +86,13 @@ export function drawSegment(
       ctx.shadowBlur = config.innerGlow.blur
       ctx.stroke()
     }
-    ctx.restore()
   }
+
+  ctx.restore()
 }
 
 /**
- * 辅助函数: 十六进制颜色转 RGBA
- */
-function hexToRgba(hex: string, alpha: number): string {
-  const r = parseInt(hex.slice(1, 3), 16)
-  const g = parseInt(hex.slice(3, 5), 16)
-  const b = parseInt(hex.slice(5, 7), 16)
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`
-}
-
-/**
- * 绘制中奖扇形的高亮效果
+ * 绘制中奖扇形的高亮效果（四层叠加）
  */
 export function drawWinningHighlight(
   ctx: CanvasRenderingContext2D,
@@ -95,13 +100,16 @@ export function drawWinningHighlight(
   endAngle: number,
   segmentAngle: number,
   radius: number,
+  centerX: number,
+  centerY: number,
   glowIntensity: number
 ) {
   ctx.save()
+  ctx.translate(centerX, centerY)
 
   const glow = glowIntensity
 
-  // 1. 绘制外层超级发光边框（多层，带脉冲效果）
+  // 1. 绘制外层超级发光边框（三层：红/黄/白）
   for (let i = 3; i >= 1; i--) {
     ctx.beginPath()
     ctx.moveTo(0, 0)
@@ -162,12 +170,16 @@ export function drawOptionText(
   option: FoodOption,
   midAngle: number,
   radius: number,
+  centerX: number,
+  centerY: number,
   isWinner: boolean
 ) {
   const scale = getScale(radius)
   const textRadius = radius * 0.65
-  const textX = textRadius * Math.cos(midAngle)
-  const textY = textRadius * Math.sin(midAngle)
+  const textX = centerX + textRadius * Math.cos(midAngle)
+  const textY = centerY + textRadius * Math.sin(midAngle)
+
+  ctx.save()
 
   // 绘制 emoji - 保持水平，动态缩放
   ctx.font = `bold ${Math.round(32 * scale)}px Arial`
@@ -190,8 +202,8 @@ export function drawOptionText(
   // 如果是中奖项，绘制"中奖!"标记（水平）
   if (isWinner) {
     const markerRadius = radius * 0.4
-    const markerX = markerRadius * Math.cos(midAngle)
-    const markerY = markerRadius * Math.sin(midAngle)
+    const markerX = centerX + markerRadius * Math.cos(midAngle)
+    const markerY = centerY + markerRadius * Math.sin(midAngle)
 
     ctx.font = `bold ${Math.round(28 * scale)}px Arial`
     ctx.fillStyle = '#FFFFFF'
@@ -205,7 +217,7 @@ export function drawOptionText(
     ctx.fillText('中奖!', markerX, markerY)
   }
 
-  ctx.shadowBlur = 0
+  ctx.restore()
 }
 
 /**
@@ -275,10 +287,9 @@ export function drawCenterButton(
   ctx: CanvasRenderingContext2D,
   centerX: number,
   centerY: number,
+  radius: number,
   isSpinning: boolean
 ) {
-  // 根据canvas中心位置估算半径
-  const radius = Math.min(centerX, centerY) - 20
   const scale = getScale(radius)
   const centerRadius = 50 * scale
 
@@ -305,7 +316,7 @@ export function drawCenterButton(
 
   ctx.shadowBlur = 0
 
-  // 主按钮渐变（霓虹风格）
+  // 主按钮渐变（霓虹风格 - 三色径向渐变）
   const gradient = ctx.createRadialGradient(
     centerX - 15 * scale,
     centerY - 15 * scale,
@@ -352,14 +363,14 @@ export function drawCenterButton(
 }
 
 /**
- * 绘制12点钟位置标记
+ * 绘制12点钟位置标记（发光指针）
  */
-export function drawMarker(ctx: CanvasRenderingContext2D, centerX: number, radius: number) {
+export function drawMarker(ctx: CanvasRenderingContext2D, centerX: number, centerY: number, radius: number) {
   const scale = getScale(radius)
   ctx.save()
 
   // 在转盘顶部画一个标记线
-  const markerY = centerX - radius - 5 * scale
+  const markerY = centerY - radius - 5 * scale
 
   // 绘制发光的标记线
   ctx.strokeStyle = '#FFD700'

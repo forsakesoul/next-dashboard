@@ -148,53 +148,57 @@ export default function FoodWheelPage() {
 
       <main className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
         {/* 动态背景 */}
-        <div className="absolute inset-0 opacity-20">
-          <div className="absolute top-0 left-1/4 w-96 h-96 bg-orange-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <div className="absolute top-0 left-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-orange-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"></div>
           <div
-            className="absolute top-1/3 right-1/4 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"
+            className="absolute top-1/3 right-1/4 w-72 h-72 sm:w-96 sm:h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"
             style={{ animationDelay: '1s' }}
           ></div>
           <div
-            className="absolute bottom-0 left-1/2 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"
+            className="absolute bottom-0 left-1/2 w-72 h-72 sm:w-96 sm:h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl animate-pulse"
             style={{ animationDelay: '2s' }}
           ></div>
         </div>
 
-        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center gap-10 px-4 py-8">
+        <div className="relative z-10 mx-auto flex w-full max-w-6xl flex-col items-center gap-6 sm:gap-8 lg:gap-10 px-4 py-6 sm:py-8 min-h-screen">
           {/* 标题 */}
-          <header className="text-center flex flex-col items-center gap-3 float-animation">
+          <header className="text-center flex flex-col items-center gap-2 sm:gap-3 float-animation w-full">
             <div className="relative">
-              <h1 className="text-5xl sm:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 neon-text">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-pink-500 neon-text px-4">
                 美食幸运转盘
               </h1>
               <div className="absolute -inset-1 bg-gradient-to-r from-yellow-600 via-orange-600 to-pink-600 blur-2xl opacity-30 -z-10"></div>
             </div>
-            <p className="text-base text-gray-300 max-w-xl">
+            <p className="text-sm sm:text-base text-gray-300 max-w-xl px-4">
               🎯 今天吃什么？转动幸运转盘，让它来决定！
             </p>
           </header>
 
           {/* 主要内容 */}
-          <div className="flex flex-col lg:flex-row w-full gap-8 items-center lg:items-start justify-center">
+          <div className="flex flex-col lg:flex-row w-full gap-6 sm:gap-8 items-center lg:items-start justify-center flex-1">
             {/* 转盘区域 */}
-            <WheelCanvas
-              options={options}
-              rotation={animation.currentRotation}
-              isSpinning={animation.isSpinning}
-              winningIndex={animation.winningIndex}
-              glowIntensity={glowIntensity}
-              onCenterClick={handleSpin}
-            />
+            <div className="w-full flex justify-center lg:flex-1 lg:max-w-lg">
+              <WheelCanvas
+                options={options}
+                rotation={animation.currentRotation}
+                isSpinning={animation.isSpinning}
+                winningIndex={animation.winningIndex}
+                glowIntensity={glowIntensity}
+                onCenterClick={handleSpin}
+              />
+            </div>
 
             {/* 控制面板 */}
-            <ControlPanel
-              options={options}
-              selectedOption={weightedSpin.selectedOption}
-              isSpinning={animation.isSpinning}
-              showConfetti={showConfetti}
-              result={weightedSpin.result}
-              onSpin={handleSpin}
-            />
+            <div className="w-full lg:w-auto lg:flex-shrink-0">
+              <ControlPanel
+                options={options}
+                selectedOption={weightedSpin.selectedOption}
+                isSpinning={animation.isSpinning}
+                showConfetti={showConfetti}
+                result={weightedSpin.result}
+                onSpin={handleSpin}
+              />
+            </div>
           </div>
         </div>
       </main>

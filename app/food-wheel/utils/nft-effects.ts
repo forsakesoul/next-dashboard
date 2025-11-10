@@ -6,6 +6,15 @@
 import { NFTTheme, createMetallicGradient } from '../config/nft-theme'
 
 /**
+ * 计算Canvas缩放比例（基于600px为基准）
+ */
+function getScale(radius: number): number {
+  // 假设原设计基于 radius = 270 (600px canvas - 40px margin，NFT版)
+  const baseRadius = 270
+  return radius / baseRadius
+}
+
+/**
  * 粒子轨道粒子
  */
 interface OrbitParticle {
@@ -41,21 +50,25 @@ export class ParticleOrbit {
   }
 
   render(ctx: CanvasRenderingContext2D, centerX: number, centerY: number) {
+    // 计算缩放比例
+    const radius = Math.min(centerX, centerY) - 40
+    const scale = getScale(radius)
+
     ctx.save()
 
     this.particles.forEach((particle) => {
       const angle = particle.angle + this.rotation
-      const x = centerX + Math.cos(angle) * this.config.radius
-      const y = centerY + Math.sin(angle) * this.config.radius
+      const x = centerX + Math.cos(angle) * this.config.radius * scale
+      const y = centerY + Math.sin(angle) * this.config.radius * scale
 
       // 绘制发光粒子
       ctx.shadowColor = this.config.glow
-      ctx.shadowBlur = 10
+      ctx.shadowBlur = 10 * scale
       ctx.fillStyle = this.config.color
       ctx.globalAlpha = particle.alpha
 
       ctx.beginPath()
-      ctx.arc(x, y, particle.size, 0, Math.PI * 2)
+      ctx.arc(x, y, particle.size * scale, 0, Math.PI * 2)
       ctx.fill()
     })
 
@@ -72,26 +85,28 @@ export function drawMetallicRim(
   centerY: number,
   radius: number
 ) {
+  const scale = getScale(radius)
   const { metalRim } = NFTTheme.wheel
 
   ctx.save()
 
   // 外层金属边框
-  const outerGradient = createMetallicGradient(ctx, centerX, centerY, radius + metalRim.outer.width)
+  const outerWidth = metalRim.outer.width * scale
+  const outerGradient = createMetallicGradient(ctx, centerX, centerY, radius + outerWidth)
   ctx.strokeStyle = outerGradient
-  ctx.lineWidth = metalRim.outer.width
+  ctx.lineWidth = outerWidth
   ctx.shadowColor = metalRim.outer.shadow.split(' ')[3] // 提取颜色
-  ctx.shadowBlur = 30
+  ctx.shadowBlur = 30 * scale
 
   ctx.beginPath()
-  ctx.arc(centerX, centerY, radius + metalRim.outer.width / 2, 0, Math.PI * 2)
+  ctx.arc(centerX, centerY, radius + outerWidth / 2, 0, Math.PI * 2)
   ctx.stroke()
 
   // 内层金色高光
-  ctx.shadowBlur = 20
+  ctx.shadowBlur = 20 * scale
   ctx.shadowColor = metalRim.inner.shadow.split(' ')[3]
   ctx.strokeStyle = metalRim.inner.color
-  ctx.lineWidth = metalRim.inner.width
+  ctx.lineWidth = metalRim.inner.width * scale
 
   ctx.beginPath()
   ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
@@ -109,16 +124,19 @@ export function drawCenterGem(
   centerY: number,
   pulseIntensity: number
 ) {
+  // 根据canvas中心位置估算半径
+  const canvasRadius = Math.min(centerX, centerY) - 40
+  const scale = getScale(canvasRadius)
   const { centerGem } = NFTTheme.wheel
 
   ctx.save()
 
   // 多层发光
   centerGem.layers.forEach((layer) => {
-    const radius = layer.radius * (0.9 + pulseIntensity * 0.1)
+    const radius = layer.radius * scale * (0.9 + pulseIntensity * 0.1)
 
     ctx.shadowColor = layer.color
-    ctx.shadowBlur = layer.blur
+    ctx.shadowBlur = layer.blur * scale
     ctx.fillStyle = layer.color
     ctx.globalAlpha = layer.opacity * pulseIntensity
 

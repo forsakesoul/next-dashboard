@@ -144,21 +144,22 @@ function WheelCanvasNFT({
 
       // === 7. 绘制中心按钮文字 ===
       ctx.save()
-      ctx.font = 'bold 24px Arial'
+      const scale = radius / 270 // 基于原设计半径270
+      ctx.font = `bold ${Math.round(24 * scale)}px Arial`
       ctx.fillStyle = '#FFFFFF'
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       ctx.shadowColor = NFTTheme.colors.glow.gold
-      ctx.shadowBlur = 10
-      ctx.fillText('🎲', centerX, centerY - 10)
+      ctx.shadowBlur = 10 * scale
+      ctx.fillText('🎲', centerX, centerY - 10 * scale)
 
-      ctx.font = 'bold 14px Arial'
-      ctx.shadowBlur = 6
-      ctx.fillText(isSpinning ? '旋转中' : '开始', centerX, centerY + 15)
+      ctx.font = `bold ${Math.round(14 * scale)}px Arial`
+      ctx.shadowBlur = 6 * scale
+      ctx.fillText(isSpinning ? '旋转中' : '开始', centerX, centerY + 15 * scale)
       ctx.restore()
 
       // === 8. 绘制12点钟标记 ===
-      drawMarker(ctx, centerX, radius + 20)
+      drawMarker(ctx, centerX, radius + 20 * scale)
 
       animationFrameRef.current = requestAnimationFrame(animate)
     }
@@ -189,21 +190,23 @@ function WheelCanvasNFT({
     const centerY = canvas.height / 2
     const distance = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2))
 
-    if (distance <= 60) {
+    // 计算缩放后的中心按钮半径（NFT版使用60作为基准）
+    const radius = Math.min(centerX, centerY) - 40
+    const scale = radius / 230 // 基于原设计半径230
+    const centerRadius = 60 * scale
+
+    if (distance <= centerRadius) {
       onCenterClick()
     }
   }
 
   return (
-    <div
-      className="relative flex items-center justify-center flex-shrink-0"
-      style={{ perspective: '1500px' }}
-    >
+    <div className="relative flex items-center justify-center flex-shrink-0">
       {/* 背景 Canvas（六边形网格） */}
       <canvas
         ref={bgCanvasRef}
-        width={600}
-        height={600}
+        width={400}
+        height={400}
         className="absolute inset-0 opacity-20"
         style={{
           width: '100%',
@@ -211,60 +214,36 @@ function WheelCanvasNFT({
         }}
       />
 
-      {/* 三层脉冲光晕背景 - 金色/紫色主题 */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div
-          className="absolute w-[450px] h-[450px] sm:w-[550px] sm:h-[550px] lg:w-[650px] lg:h-[650px] max-w-[95vw] max-h-[95vw] rounded-full animate-pulse"
-          style={{
-            background: 'radial-gradient(circle, rgba(218,165,32,0.2) 0%, transparent 70%)',
-            animation: 'pulse 3s ease-in-out infinite',
-          }}
-        />
-        <div
-          className="absolute w-[420px] h-[420px] sm:w-[520px] sm:h-[520px] lg:w-[620px] lg:h-[620px] max-w-[90vw] max-h-[90vw] rounded-full animate-pulse"
-          style={{
-            background: 'radial-gradient(circle, rgba(138,43,226,0.2) 0%, transparent 70%)',
-            animation: 'pulse 3s ease-in-out infinite 0.5s',
-          }}
-        />
-        <div
-          className="absolute w-[390px] h-[390px] sm:w-[490px] sm:h-[490px] lg:w-[590px] lg:h-[590px] max-w-[85vw] max-h-[85vw] rounded-full animate-pulse"
-          style={{
-            background: 'radial-gradient(circle, rgba(0,212,255,0.2) 0%, transparent 70%)',
-            animation: 'pulse 3s ease-in-out infinite 1s',
-          }}
-        />
-      </div>
-
       {/* 转盘容器 - NFT 风格玻璃态 */}
       <div
-        className="relative w-[400px] h-[400px] sm:w-[500px] sm:h-[500px] lg:w-[600px] lg:h-[600px] max-w-[90vw] max-h-[90vw] rounded-full"
+        className="relative aspect-square rounded-full"
         style={{
+          width: 'min(70vmin, 300px)',
+          height: 'min(70vmin, 300px)',
           background: NFTTheme.backgrounds.card.glass,
           backdropFilter: 'blur(15px) saturate(120%)',
           WebkitBackdropFilter: 'blur(15px) saturate(120%)',
           border: '2px solid rgba(218, 165, 32, 0.3)',
           boxShadow:
             '0 0 40px rgba(218, 165, 32, 0.3), 0 8px 32px rgba(0, 0, 0, 0.6), inset 0 0 40px rgba(138, 43, 226, 0.1)',
-          transform: isSpinning ? 'rotateX(0deg) scale(1)' : 'rotateX(12deg) scale(1)',
-          transformStyle: 'preserve-3d',
-          transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          transform: isSpinning ? 'scale(1.02)' : 'scale(1)',
+          transition: 'transform 0.3s ease-out',
         }}
         onMouseEnter={(e) => {
           if (!isSpinning) {
-            e.currentTarget.style.transform = 'rotateX(15deg) rotateY(3deg) scale(1.03)'
+            e.currentTarget.style.transform = 'scale(1.05)'
           }
         }}
         onMouseLeave={(e) => {
           if (!isSpinning) {
-            e.currentTarget.style.transform = 'rotateX(12deg) scale(1)'
+            e.currentTarget.style.transform = 'scale(1)'
           }
         }}
       >
         <canvas
           ref={canvasRef}
-          width={600}
-          height={600}
+          width={400}
+          height={400}
           className="relative z-10 cursor-pointer"
           style={{
             width: '100%',
