@@ -63,16 +63,16 @@ export const PCTheme = {
   // 转盘特定样式
   wheel: {
     size: {
-      desktop: 500,
-      largeDesktop: 600,
+      desktop: 300, // PC端适配尺寸，更紧凑
+      largeDesktop: 300,
     },
-    centerButtonRadius: 70,
-    pointerSize: 24,
+    centerButtonRadius: 40, // 按比例缩小
+    pointerSize: 14, // 按比例缩小
     segmentStrokeWidth: 1,
     segmentStrokeColor: 'rgba(255, 255, 255, 0.2)',
-    winningStrokeWidth: 4,
+    winningStrokeWidth: 3, // 稍微缩小
     winningStrokeColor: '#f59e0b',
-    winningGlow: '0 0 20px rgba(245, 158, 11, 0.6)',
+    winningGlow: '0 0 15px rgba(245, 158, 11, 0.6)', // 稍微缩小
   },
 
   // 动画时长

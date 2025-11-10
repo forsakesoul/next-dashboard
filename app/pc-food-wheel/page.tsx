@@ -181,9 +181,9 @@ export default function PCFoodWheelPage() {
           paddingBottom: PCTheme.spacing.sectionGap,
         }}
       >
-        <div className="flex gap-8">
-          {/* 左侧：转盘区域 (60%) */}
-          <div className="flex-1 flex flex-col items-center justify-center">
+        <div className="flex gap-6">
+          {/* 左侧：转盘区域 - 更紧凑 */}
+          <div className="flex-shrink-0 flex flex-col items-center justify-center">
             <div className="text-center">
               {/* 转盘组件 */}
               <WheelCanvasPC
@@ -197,16 +197,16 @@ export default function PCFoodWheelPage() {
 
               {/* 提示文字 */}
               <p
-                className="mt-6 text-base"
+                className="mt-4 text-sm"
                 style={{ color: PCTheme.text.tertiary }}
               >
                 点击中心按钮或右侧"开始抽奖"按钮
               </p>
 
               {/* 快捷键提示 */}
-              <div className="mt-4 flex items-center justify-center gap-2">
+              <div className="mt-3 flex items-center justify-center gap-2">
                 <kbd
-                  className="px-3 py-1.5 rounded text-sm font-mono"
+                  className="px-2.5 py-1 rounded text-xs font-mono"
                   style={{
                     background: PCTheme.surface.card,
                     border: PCTheme.surface.glass.border,
@@ -215,13 +215,13 @@ export default function PCFoodWheelPage() {
                 >
                   Space
                 </kbd>
-                <span style={{ color: PCTheme.text.muted }}>快捷键启动</span>
+                <span className="text-xs" style={{ color: PCTheme.text.muted }}>快捷键启动</span>
               </div>
             </div>
           </div>
 
-          {/* 右侧：控制面板 (40%) */}
-          <aside className="w-[480px] space-y-6">
+          {/* 右侧：控制面板 - 扩展宽度以平衡布局 */}
+          <aside className="flex-1 space-y-6 max-w-[600px]">
             {/* 结果卡片 */}
             <div
               className="rounded-2xl p-6 relative overflow-hidden transition-all duration-300 hover:scale-[1.02]"

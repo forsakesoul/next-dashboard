@@ -144,18 +144,18 @@ export default function WheelCanvasPC({
     ctx.save()
     ctx.translate(x, y)
 
-    // 绘制Emoji
-    ctx.font = `${60 * 2}px sans-serif`
+    // 绘制Emoji (按比例缩小 从60->32)
+    ctx.font = `${32 * 2}px sans-serif`
     ctx.textAlign = 'center'
     ctx.textBaseline = 'middle'
-    ctx.fillText(option.emoji, 0, -30)
+    ctx.fillText(option.emoji, 0, -18)
 
-    // 绘制文字
-    ctx.font = `bold ${24 * 2}px sans-serif`
+    // 绘制文字 (按比例缩小 从24->14)
+    ctx.font = `bold ${14 * 2}px sans-serif`
     ctx.fillStyle = '#ffffff'
     ctx.shadowColor = 'rgba(0, 0, 0, 0.5)'
-    ctx.shadowBlur = 8
-    ctx.fillText(option.name, 0, 30)
+    ctx.shadowBlur = 6
+    ctx.fillText(option.name, 0, 18)
 
     ctx.restore()
   }
@@ -231,29 +231,29 @@ export default function WheelCanvasPC({
     ctx.lineWidth = 6
     ctx.stroke()
 
-    // 绘制图标
+    // 绘制图标 (按比例缩小 从70->40)
     if (spinning) {
       // 旋转动画图标
       ctx.save()
       ctx.translate(CENTER_X, CENTER_Y)
       ctx.rotate((Date.now() / 200) % (2 * Math.PI))
-      ctx.font = `bold ${70 * 2}px sans-serif`
+      ctx.font = `bold ${40 * 2}px sans-serif`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       ctx.fillStyle = '#ffffff'
       ctx.shadowColor = 'rgba(0, 0, 0, 0.3)'
-      ctx.shadowBlur = 10
+      ctx.shadowBlur = 8
       ctx.fillText('⟳', 0, 0)
       ctx.restore()
     } else {
       // 播放图标
-      ctx.font = `bold ${70 * 2}px sans-serif`
+      ctx.font = `bold ${40 * 2}px sans-serif`
       ctx.textAlign = 'center'
       ctx.textBaseline = 'middle'
       ctx.fillStyle = '#ffffff'
       ctx.shadowColor = 'rgba(0, 0, 0, 0.3)'
-      ctx.shadowBlur = 10
-      ctx.fillText('▶', CENTER_X + 15, CENTER_Y)
+      ctx.shadowBlur = 8
+      ctx.fillText('▶', CENTER_X + 8, CENTER_Y)
     }
 
     ctx.restore()
@@ -348,12 +348,12 @@ export default function WheelCanvasPC({
 
   return (
     <div ref={containerRef} className="relative">
-      {/* 转盘光环效果 */}
+      {/* 转盘光环效果 - 按比例缩小 */}
       <div
         className="absolute inset-0 rounded-full animate-pulse"
         style={{
-          background: 'radial-gradient(circle, rgba(102, 126, 234, 0.2) 0%, transparent 70%)',
-          filter: 'blur(40px)',
+          background: 'radial-gradient(circle, rgba(102, 126, 234, 0.25) 0%, transparent 70%)',
+          filter: 'blur(30px)',
           animationDuration: '3s',
         }}
       />
@@ -367,7 +367,7 @@ export default function WheelCanvasPC({
         style={{
           width: SIZE,
           height: SIZE,
-          filter: isSpinning ? 'brightness(1.15) saturate(1.2)' : 'drop-shadow(0 20px 60px rgba(0, 0, 0, 0.4))',
+          filter: isSpinning ? 'brightness(1.15) saturate(1.2)' : 'drop-shadow(0 10px 40px rgba(0, 0, 0, 0.3))',
         }}
       />
     </div>
