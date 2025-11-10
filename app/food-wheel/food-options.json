@@ -120,6 +120,21 @@
       "emoji": "🍽️",
       "baseWeight": 0.3,
       "timeBoosts": []
+    },
+    {
+      "id": 10,
+      "name": "庆丰包子",
+      "color": "#E67E22",
+      "emoji": "🥟",
+      "baseWeight": 1,
+      "timeBoosts": [
+        {
+          "name": "午餐时段",
+          "startHour": 11,
+          "endHour": 14,
+          "multiplier": 2.0
+        }
+      ]
     }
   ],
   "metadata": {
