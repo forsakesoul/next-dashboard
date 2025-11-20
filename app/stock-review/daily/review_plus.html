@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A股复盘系统 Pro (MUI版)</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Material UI & Emotion -->
+    <script crossorigin src="https://unpkg.com/@mui/material@5.15.0/umd/material-ui.development.js"></script>
+    <script crossorigin src="https://unpkg.com/@emotion/react@11.11.0/dist/emotion-react.umd.js"></script>
+    <script crossorigin src="https://unpkg.com/@emotion/styled@11.11.0/dist/emotion-styled.umd.js"></script>
+
+    <!-- Fonts & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+    <style>
+        body { font-family: 'Roboto', 'Noto Sans SC', sans-serif; background-color: #f5f5f5; margin: 0; }
+        /* Custom Scrollbar for JSON preview */
+        .json-container::-webkit-scrollbar { width: 8px; height: 8px; }
+        .json-container::-webkit-scrollbar-track { background: #1e1e1e; }
+        .json-container::-webkit-scrollbar-thumb { background: #424242; border-radius: 4px; }
+        .json-container::-webkit-scrollbar-thumb:hover { background: #555; }
+    </style>
+</head>
+<body>
+    <!-- Error Suppression Script -->
+    <script>
+        // Suppress benign ResizeObserver errors common in MUI
+        const originalError = console.error;
+        console.error = (...args) => {
+            if (/ResizeObserver loop/.test(args[0])) {
+                return;
+            }
+            originalError.call(console, ...args);
+        };
+        window.addEventListener('error', e => {
+            if (e.message === 'ResizeObserver loop completed with undelivered notifications.' || 
+                e.message === 'ResizeObserver loop limit exceeded') {
+                e.stopImmediatePropagation();
+            }
+        });
+    </script>
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { 
+            useState, useEffect, useMemo 
+        } = React;
+        
+        const { 
+            createTheme, ThemeProvider, CssBaseline, 
+            Container, Box, Grid, Paper, Typography, 
+            TextField, Select, MenuItem, Button, IconButton, 
+            AppBar, Toolbar, InputAdornment, Divider,
+            FormControl, InputLabel, Rating, Chip
+        } = MaterialUI;
+
+        // --- 自定义图标 (SVG) ---
+        // 使用 SVG 以避免 icon font 加载延迟，包裹在 SvgIcon 中并非必须，直接渲染即可
+        const IconWrapper = ({ children }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {children}
+            </svg>
+        );
+        
+        const Icons = {
+            Save: () => <IconWrapper><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></IconWrapper>,
+            Copy: () => <IconWrapper><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></IconWrapper>,
+            Download: () => <IconWrapper><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></IconWrapper>,
+            Trash: () => <IconWrapper><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></IconWrapper>,
+            Plus: () => <IconWrapper><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></IconWrapper>,
+            TrendingUp: () => <IconWrapper><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></IconWrapper>
+        };
+
+        // --- 主题配置 ---
+        const theme = createTheme({
+            palette: {
+                mode: 'light',
+                primary: { main: '#1976d2' },
+                secondary: { main: '#9c27b0' },
+                background: { default: '#f4f6f8' },
+                success: { main: '#2e7d32' },
+                error: { main: '#d32f2f' },
+            },
+            typography: {
+                fontFamily: '"Roboto", "Noto Sans SC", sans-serif',
+            },
+            components: {
+                MuiTextField: { defaultProps: { size: 'small', variant: 'outlined' } },
+                MuiSelect: { defaultProps: { size: 'small' } },
+                MuiButton: { styleOverrides: { root: { textTransform: 'none' } } }
+            }
+        });
+
+        // --- 默认数据模板 (用于新日期) ---
+        const createEmptyDayData = () => ({
+            market: {
+                shanghai_index: "",
+                market_volume: "",
+                market_sentiment: "一般",
+                main_theme: ""
+            },
+            account: {
+                cash_balance: 0,     // 可用现金 (用于补齐总资产)
+                total_asset: 0,      // 总资产 (自动计算)
+                daily_pnl: "",
+                daily_pnl_percent: "",
+                transfer_amount: "", // 银证转账
+                self_rating: 3
+            },
+            trades: [
+                {
+                    id: Date.now(),
+                    stock_name: "",
+                    stock_code: "",
+                    action: "HOLD",
+                    holding_amount: "", // 新增：持仓总金额
+                    price: "",
+                    change_percent: "",
+                    logic: "",
+                    attribution: "NONE"
+                }
+            ]
+        });
+
+        const App = () => {
+            // --- 状态管理 ---
+            const [currentDate, setCurrentDate] = useState(new Date().toISOString().split('T')[0]);
+            const [allData, setAllData] = useState({
+                [new Date().toISOString().split('T')[0]]: createEmptyDayData()
+            });
+
+            // 获取当前日期的数据，如果没有则创建一个空的
+            const currentData = useMemo(() => {
+                return allData[currentDate] || createEmptyDayData();
+            }, [allData, currentDate]);
+
+            // --- 核心：自动计算总资产 ---
+            // 监听 trades 和 cash 变化，更新 account.total_asset
+            useEffect(() => {
+                const tradesTotal = currentData.trades.reduce((sum, t) => sum + (parseFloat(t.holding_amount) || 0), 0);
+                const cash = parseFloat(currentData.account.cash_balance) || 0;
+                const calculatedTotal = tradesTotal + cash;
+
+                // 只有当计算值与当前存储值不同时才更新，避免无限循环
+                if (calculatedTotal !== currentData.account.total_asset) {
+                    handleDataChange('account', 'total_asset', calculatedTotal);
+                }
+            }, [currentData.trades, currentData.account.cash_balance]);
+
+            // --- 数据更新 Handler ---
+            // 通用更新函数：更新当前日期下的某个模块的字段
+            const handleDataChange = (section, field, value) => {
+                setAllData(prev => ({
+                    ...prev,
+                    [currentDate]: {
+                        ...prev[currentDate] || createEmptyDayData(),
+                        [section]: {
+                            ...(prev[currentDate]?.[section] || createEmptyDayData()[section]),
+                            [field]: value
+                        }
+                    }
+                }));
+            };
+
+            // 交易记录更新
+            const handleTradeChange = (id, field, value) => {
+                setAllData(prev => {
+                    const dayData = prev[currentDate] || createEmptyDayData();
+                    const newTrades = dayData.trades.map(t => t.id === id ? { ...t, [field]: value } : t);
+                    return {
+                        ...prev,
+                        [currentDate]: { ...dayData, trades: newTrades }
+                    };
+                });
+            };
+
+            const addTradeRow = () => {
+                setAllData(prev => {
+                    const dayData = prev[currentDate] || createEmptyDayData();
+                    return {
+                        ...prev,
+                        [currentDate]: {
+                            ...dayData,
+                            trades: [...dayData.trades, {
+                                id: Date.now(),
+                                stock_name: "", stock_code: "", action: "BUY",
+                                holding_amount: "", price: "", change_percent: "",
+                                logic: "", attribution: "NONE"
+                            }]
+                        }
+                    };
+                });
+            };
+
+            const removeTradeRow = (id) => {
+                setAllData(prev => {
+                    const dayData = prev[currentDate] || createEmptyDayData();
+                    return {
+                        ...prev,
+                        [currentDate]: {
+                            ...dayData,
+                            trades: dayData.trades.filter(t => t.id !== id)
+                        }
+                    };
+                });
+            };
+
+            // --- JSON 生成与下载 ---
+            const generateJSON = () => JSON.stringify(allData, null, 4);
+
+            const copyToClipboard = () => {
+                navigator.clipboard.writeText(generateJSON());
+            };
+
+            const downloadJson = () => {
+                const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(generateJSON());
+                const downloadAnchorNode = document.createElement('a');
+                downloadAnchorNode.setAttribute("href", dataStr);
+                downloadAnchorNode.setAttribute("download", `trading_review_db.json`);
+                document.body.appendChild(downloadAnchorNode);
+                downloadAnchorNode.click();
+                downloadAnchorNode.remove();
+            };
+
+            // --- 渲染辅助 ---
+            const getActionColor = (action) => {
+                switch(action) {
+                    case 'BUY': return 'error'; // A股红是涨/买
+                    case 'SELL': return 'success'; // A股绿是跌/卖 (习惯上) 或蓝色
+                    case 'HOLD': return 'primary';
+                    default: return 'default';
+                }
+            };
+
+            return (
+                <ThemeProvider theme={theme}>
+                    <CssBaseline />
+                    
+                    <AppBar position="static" color="default" elevation={1} sx={{ mb: 3, bgcolor: 'white' }}>
+                        <Toolbar>
+                            <Box display="flex" alignItems="center" gap={1} flexGrow={1}>
+                                <Box color="primary.main"><Icons.TrendingUp /></Box>
+                                <Typography variant="h6" color="text.primary" fontWeight="bold">
+                                    A股复盘系统 Pro
+                                </Typography>
+                            </Box>
+                            <Box display="flex" alignItems="center" gap={2}>
+                                <TextField
+                                    label="选择日期"
+                                    type="date"
+                                    value={currentDate}
+                                    onChange={(e) => setCurrentDate(e.target.value)}
+                                    InputLabelProps={{ shrink: true }}
+                                    sx={{ width: 180 }}
+                                />
+                            </Box>
+                        </Toolbar>
+                    </AppBar>
+
+                    <Container maxWidth="xl">
+                        <Grid container spacing={3}>
+                            {/* 左侧：输入区域 */}
+                            <Grid item xs={12} lg={8}>
+                                {/* 1. 市场环境 */}
+                                <Paper elevation={0} sx={{ p: 3, mb: 3, border: '1px solid #e0e0e0', borderRadius: 2 }}>
+                                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom color="primary">
+                                        📊 市场环境
+                                    </Typography>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={12} md={3}>
+                                            <TextField fullWidth label="上证指数表现" placeholder="+1.2% 放量"
+                                                value={currentData.market.shanghai_index}
+                                                onChange={e => handleDataChange('market', 'shanghai_index', e.target.value)}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={3}>
+                                            <TextField fullWidth label="两市成交额" placeholder="8000亿"
+                                                value={currentData.market.market_volume}
+                                                onChange={e => handleDataChange('market', 'market_volume', e.target.value)}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12} md={3}>
+                                            <FormControl fullWidth size="small">
+                                                <InputLabel>市场情绪</InputLabel>
+                                                <Select
+                                                    value={currentData.market.market_sentiment}
+                                                    label="市场情绪"
+                                                    onChange={e => handleDataChange('market', 'market_sentiment', e.target.value)}
+                                                >
+                                                    <MenuItem value="极好">🔥 极好 (普涨/连板)</MenuItem>
+                                                    <MenuItem value="较好">☀️ 较好</MenuItem>
+                                                    <MenuItem value="一般">☁️ 一般 (分化)</MenuItem>
+                                                    <MenuItem value="较差">🌧️ 较差</MenuItem>
+                                                    <MenuItem value="冰点">❄️ 冰点 (普跌)</MenuItem>
+                                                </Select>
+                                            </FormControl>
+                                        </Grid>
+                                        <Grid item xs={12} md={3}>
+                                            <TextField fullWidth label="主线/核心题材" placeholder="例如：低空经济"
+                                                value={currentData.market.main_theme}
+                                                onChange={e => handleDataChange('market', 'main_theme', e.target.value)}
+                                            />
+                                        </Grid>
+                                    </Grid>
+                                </Paper>
+
+                                {/* 2. 个股操作 */}
+                                <Paper elevation={0} sx={{ p: 3, mb: 3, border: '1px solid #e0e0e0', borderRadius: 2 }}>
+                                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                                        <Typography variant="subtitle1" fontWeight="bold" color="primary">
+                                            🧠 个股持仓与逻辑
+                                        </Typography>
+                                        <Button variant="outlined" startIcon={<Icons.Plus />} size="small" onClick={addTradeRow}>
+                                            添加标的
+                                        </Button>
+                                    </Box>
+
+                                    {currentData.trades.map((trade) => (
+                                        <Box key={trade.id} sx={{ p: 2, mb: 2, bgcolor: '#f8fafc', borderRadius: 2, position: 'relative', border: '1px solid #eee' }}>
+                                            <IconButton 
+                                                onClick={() => removeTradeRow(trade.id)} 
+                                                size="small" 
+                                                color="error"
+                                                sx={{ position: 'absolute', top: 8, right: 8 }}
+                                            >
+                                                <Icons.Trash />
+                                            </IconButton>
+
+                                            <Grid container spacing={2}>
+                                                {/* 行1: 基础信息 + 金额 */}
+                                                <Grid item xs={6} md={2}>
+                                                    <TextField fullWidth label="股票名称" value={trade.stock_name} onChange={e => handleTradeChange(trade.id, 'stock_name', e.target.value)} />
+                                                </Grid>
+                                                <Grid item xs={6} md={2}>
+                                                    <TextField fullWidth label="代码" placeholder="600xxx" value={trade.stock_code} onChange={e => handleTradeChange(trade.id, 'stock_code', e.target.value)} />
+                                                </Grid>
+                                                <Grid item xs={6} md={2}>
+                                                    <FormControl fullWidth size="small">
+                                                        <InputLabel>动作</InputLabel>
+                                                        <Select label="动作" value={trade.action} onChange={e => handleTradeChange(trade.id, 'action', e.target.value)}>
+                                                            <MenuItem value="BUY">买入</MenuItem>
+                                                            <MenuItem value="SELL">卖出</MenuItem>
+                                                            <MenuItem value="HOLD">持仓</MenuItem>
+                                                            <MenuItem value="WATCH">观察</MenuItem>
+                                                        </Select>
+                                                    </FormControl>
+                                                </Grid>
+                                                <Grid item xs={6} md={3}>
+                                                    <TextField fullWidth type="number" label="持仓市值 (元)" placeholder="0"
+                                                        InputProps={{ startAdornment: <InputAdornment position="start">¥</InputAdornment> }}
+                                                        value={trade.holding_amount} onChange={e => handleTradeChange(trade.id, 'holding_amount', e.target.value)} 
+                                                        sx={{ bgcolor: '#fff' }}
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={6} md={3}>
+                                                    <TextField fullWidth type="number" label="今日涨跌%" 
+                                                        value={trade.change_percent} onChange={e => handleTradeChange(trade.id, 'change_percent', e.target.value)} 
+                                                        sx={{ input: { color: parseFloat(trade.change_percent) > 0 ? 'red' : 'green' } }}
+                                                    />
+                                                </Grid>
+
+                                                {/* 行2: 逻辑与归因 */}
+                                                <Grid item xs={12} md={8}>
+                                                    <TextField fullWidth multiline rows={2} label="核心逻辑 / 交易计划" placeholder="为何买入？为何卖出？是否符合预期？"
+                                                        value={trade.logic} onChange={e => handleTradeChange(trade.id, 'logic', e.target.value)}
+                                                        sx={{ bgcolor: 'white' }}
+                                                    />
+                                                </Grid>
+                                                <Grid item xs={12} md={4}>
+                                                    <FormControl fullWidth size="small" sx={{ height: '100%' }}>
+                                                        <InputLabel>盈亏归因</InputLabel>
+                                                        <Select label="盈亏归因" value={trade.attribution} onChange={e => handleTradeChange(trade.id, 'attribution', e.target.value)}>
+                                                            <MenuItem value="NONE">未归因</MenuItem>
+                                                            <MenuItem value="MODE_WIN">✅ 模式内盈利 (实力)</MenuItem>
+                                                            <MenuItem value="LUCK_WIN">🍀 模式外盈利 (运气)</MenuItem>
+                                                            <MenuItem value="MODE_LOSS">🛡️ 模式内亏损 (成本)</MenuItem>
+                                                            <MenuItem value="DISCIPLINE_LOSS">⚠️ 模式外亏损 (纪律)</MenuItem>
+                                                        </Select>
+                                                    </FormControl>
+                                                </Grid>
+                                            </Grid>
+                                        </Box>
+                                    ))}
+                                </Paper>
+
+                                {/* 3. 账户概览 */}
+                                <Paper elevation={0} sx={{ p: 3, mb: 3, border: '1px solid #e0e0e0', borderRadius: 2 }}>
+                                    <Typography variant="subtitle1" fontWeight="bold" gutterBottom color="primary">
+                                        💰 账户总结
+                                    </Typography>
+                                    <Grid container spacing={2}>
+                                        <Grid item xs={6} md={3}>
+                                            <TextField fullWidth disabled label="总资产 (自动计算)" 
+                                                value={currentData.account.total_asset} 
+                                                InputProps={{ startAdornment: <InputAdornment position="start">¥</InputAdornment> }}
+                                                helperText="= 持仓总和 + 剩余现金"
+                                                sx={{ bgcolor: '#f0f0f0' }}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={6} md={3}>
+                                             <TextField fullWidth type="number" label="剩余可用现金" placeholder="0"
+                                                value={currentData.account.cash_balance} 
+                                                onChange={e => handleDataChange('account', 'cash_balance', e.target.value)}
+                                                InputProps={{ startAdornment: <InputAdornment position="start">¥</InputAdornment> }}
+                                                helperText="若需完全等于持仓，请填0"
+                                            />
+                                        </Grid>
+                                        <Grid item xs={6} md={3}>
+                                            <TextField fullWidth type="number" label="今日盈亏 (元)" 
+                                                value={currentData.account.daily_pnl} 
+                                                onChange={e => handleDataChange('account', 'daily_pnl', e.target.value)}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={6} md={3}>
+                                            <TextField fullWidth type="number" label="银证转账 (+入/-出)" 
+                                                value={currentData.account.transfer_amount} 
+                                                onChange={e => handleDataChange('account', 'transfer_amount', e.target.value)}
+                                                sx={{ input: { color: '#1976d2' } }}
+                                            />
+                                        </Grid>
+                                        <Grid item xs={12}>
+                                            <Box display="flex" alignItems="center" gap={2} mt={1}>
+                                                <Typography component="legend" color="text.secondary">今日纪律评分:</Typography>
+                                                <Rating 
+                                                    value={currentData.account.self_rating} 
+                                                    onChange={(event, newValue) => handleDataChange('account', 'self_rating', newValue)}
+                                                />
+                                            </Box>
+                                        </Grid>
+                                    </Grid>
+                                </Paper>
+                            </Grid>
+
+                            {/* 右侧：JSON 预览 */}
+                            <Grid item xs={12} lg={4}>
+                                <Paper elevation={3} sx={{ 
+                                    p: 0, bgcolor: '#1e1e1e', color: '#e0e0e0', 
+                                    borderRadius: 2, overflow: 'hidden', position: 'sticky', top: 24 
+                                }}>
+                                    <Box p={2} bgcolor="#2d2d2d" display="flex" justifyContent="space-between" alignItems="center">
+                                        <Typography variant="subtitle2" fontWeight="bold" color="#90caf9">
+                                            📦 全局数据 (JSON)
+                                        </Typography>
+                                        <Box>
+                                            <IconButton size="small" onClick={copyToClipboard} sx={{ color: '#ccc' }} title="复制"><Icons.Copy /></IconButton>
+                                            <IconButton size="small" onClick={downloadJson} sx={{ color: '#ccc' }} title="下载"><Icons.Download /></IconButton>
+                                        </Box>
+                                    </Box>
+                                    <Box 
+                                        className="json-container"
+                                        sx={{ 
+                                            p: 2, 
+                                            height: 'calc(100vh - 120px)', 
+                                            overflowY: 'auto', 
+                                            fontFamily: 'Monospace', 
+                                            fontSize: '0.75rem',
+                                            whiteSpace: 'pre-wrap',
+                                            wordBreak: 'break-all'
+                                        }}
+                                    >
+                                        {generateJSON()}
+                                    </Box>
+                                </Paper>
+                            </Grid>
+                        </Grid>
+                    </Container>
+                </ThemeProvider>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
